@@ -96,3 +96,7 @@ class BeautyFlower:
         """Builds the discriminator of the network using building blocks of layers
         """
         pass
+    
+    def generateImage(self, image):
+        generatedHighRes = self.generator.predict(image)
+        return generatedHighRes

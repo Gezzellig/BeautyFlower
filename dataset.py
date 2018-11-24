@@ -28,7 +28,7 @@ def printLabelNames(indices):
     labels = [label_names[index] for index in indices]
     print ("Selected categories: " + str(labels))
 
-def showImage(data, index, seconds=0):
+def showImageFromData(data, index, seconds=0):
     """Show image from the dataset
     
     Arguments: 
@@ -87,3 +87,16 @@ def getData(target_labels, show_info=False):
         print ("Images in selected categories: " + str(len(filtered_data)))
     
     return filtered_data
+
+def toImage(imageData):
+    # Obtain image from the database
+    arr = imageData
+
+    # Extract the colors
+    R = arr[0:1024].reshape(32,32)/255.0
+    G = arr[1024:2048].reshape(32,32)/255.0
+    B = arr[2048:].reshape(32,32)/255.0
+ 
+    # Combine the color values
+    img = np.dstack((R,G,B))
+    return img
