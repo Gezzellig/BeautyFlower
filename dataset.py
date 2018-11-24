@@ -30,6 +30,33 @@ def printLabelNames(indices):
     labels = [label_names[index] for index in indices]
     print ("Selected categories: " + str(labels))
 
+def showImage(data, index):
+    """
+    Shows image from the dataset
+    Params: 
+        data: data_x images from the CIFAR dataset
+        index: Index of the image to show
+    """
+
+    # Obtain image from the database
+    arr = data[index]
+
+    # Extract the colors
+    R = arr[0:1024].reshape(32,32)/255.0
+    G = arr[1024:2048].reshape(32,32)/255.0
+    B = arr[2048:].reshape(32,32)/255.0
+ 
+    # Combine the color values
+    img = np.dstack((R,G,B))
+
+    #Plot the image using matplotlib
+    title = "Image"
+    fig = plt.figure(figsize=(3,3))
+    ax = fig.add_subplot(111)
+    ax.imshow(img,interpolation='none')
+    ax.set_title(title ,fontsize =15)
+    plt.show()
+
 def getData(target_labels, show_info=False):
     """
     Gets data from folder 'data/' which should contain Cifar-100 database.
