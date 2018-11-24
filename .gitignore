@@ -73,4 +73,4 @@ fabric.properties
 !.vscode/extensions.json
 
 # Don't upload the data file to git 
-.data/*
+data/*
