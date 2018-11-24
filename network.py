@@ -8,15 +8,7 @@ from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Sequential, Model
 
 class BeautyFlower:
-    """The BeautyFlower GAN class.
-
-    Attributes
-    ----------
-    attr1 : `str`
-        Description of `attr1`.
-    attr2 : `int`, optional
-        Description of `attr2`.
-
+    """The `BeautyFlower` GAN class.
     """
 
     def __init__(self):
