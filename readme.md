@@ -1,4 +1,4 @@
-# Super Resolution on Tiny Images
+# :cherry_blossom: Super Resolution on Tiny Images :cherry_blossom:
 
 ## Instructions
 ### Prepare program
