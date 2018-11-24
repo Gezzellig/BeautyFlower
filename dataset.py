@@ -35,6 +35,7 @@ def getData(target_labels, show_info=False):
     Gets data from folder 'data/' which should contain Cifar-100 database.
     Params:
         target_labels: list of course label indices included in the final dataset
+        show_info: Will print some info about the amount of images, and the included categories.
     """
 
     # Decompress the data
