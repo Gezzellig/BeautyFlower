@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import keras
 
 def unpickle(file):
     import pickle
@@ -15,8 +16,6 @@ def printLabelNames(indices):
 
 data = unpickle("data/train")
 
-
-
 x_train = data[b'data']
 y_train = data[b'coarse_labels']
 
@@ -29,8 +28,7 @@ printLabelNames(target_labels)
 # Select indices of labels that are in the target labels
 selected_indices_training = [idx for idx, label in enumerate(y_train) if label in target_labels]
 
-
-
+# Select only images from target categories to input
 x_input = x_train[selected_indices_training]
 
 # Images in selected data
