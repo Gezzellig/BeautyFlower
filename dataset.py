@@ -31,7 +31,7 @@ def printLabelNames(indices):
 def showImage(data, index, seconds=0):
     """Show image from the dataset
     
-    Params: 
+    Arguments: 
         data: data_x images from the CIFAR dataset
         index: Index of the image to show
         seconds: Amount of seconds to show image, 0 = don't close automatically

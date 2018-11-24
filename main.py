@@ -13,3 +13,6 @@ data = dataset.getData([2], show_info=True)
 
 # Show a random example image
 dataset.showImage(data, random.randint(0, len(data) - 1), seconds=2)
+
+# Instanciate the network
+gan = network.BeautyFlower()
