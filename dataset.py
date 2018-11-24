@@ -30,12 +30,13 @@ def printLabelNames(indices):
     labels = [label_names[index] for index in indices]
     print ("Selected categories: " + str(labels))
 
-def showImage(data, index):
+def showImage(data, index, seconds=0):
     """
     Shows image from the dataset
     Params: 
         data: data_x images from the CIFAR dataset
         index: Index of the image to show
+        seconds: Amount of seconds to show image, 0 = don't close automatically
     """
 
     # Obtain image from the database
@@ -55,7 +56,9 @@ def showImage(data, index):
     ax = fig.add_subplot(111)
     ax.imshow(img,interpolation='none')
     ax.set_title(title ,fontsize =15)
-    plt.show()
+    plt.show(block=(seconds == 0)) # True if seconds is equal to 0, False otherwise
+    plt.pause(seconds)
+    plt.close()
 
 def getData(target_labels, show_info=False):
     """
