@@ -74,3 +74,8 @@ fabric.properties
 
 # Don't upload the data file to git 
 data/*
+
+# PyCache
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
