@@ -1,11 +1,9 @@
 """Functions relating to the structure of the network.
 """
 
-from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
-from keras.layers import BatchNormalization, Activation, ZeroPadding2D, Add
-from keras.layers.advanced_activations import PReLU, LeakyReLU
+from keras.layers import Input, BatchNormalization, Activation, Add
 from keras.layers.convolutional import UpSampling2D, Conv2D
-from keras.models import Sequential, Model
+from keras.models import Model
 from keras.optimizers import Adam
 
 class BeautyFlower:
