@@ -5,7 +5,6 @@ from keras.layers import Input, Dense, Reshape, Flatten, Dropout, Concatenate
 from keras.layers import BatchNormalization, Activation, ZeroPadding2D, Add
 from keras.layers.advanced_activations import PReLU, LeakyReLU
 from keras.layers.convolutional import UpSampling2D, Conv2D
-from keras.applications import VGG19
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 
@@ -83,7 +82,7 @@ class BeautyFlower:
         c1 = Conv2D(16, kernel_size=9, strides=1, padding='same')(inputLayer)
         c1 = Activation('relu')(c1)
 
-        # Propogate through residual blocks
+        # Make a number of residual blocks each connected to the previous layer
         r = generatorBlock(c1, self.gf)
         for _ in range(self.n_residual_blocks - 1):
             r = generatorBlock(r, self.gf)
