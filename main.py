@@ -22,8 +22,7 @@ ds.showImageFromData(data, 2)
 # Instanciate the network
 gan = nw.BeautyFlower()
 
-print ("Start training: Showing preview every 100 epochs.")
-for x in tqdm(range(1000)):
+for x in tqdm(range(1000), desc=" Training generator"):
     images = data[0:20]
     images = [ds.toImage(img) for img in images]
     imgLowRes = [rescale(img, 0.5) for img in images]
