@@ -11,9 +11,17 @@ from keras.optimizers import Adam
 
 class BeautyFlower:
     """The `BeautyFlower` GAN class.
+
+    Parameters
+    ------------
+    n_residual_blocks: `int` (default=6)
+        Number of blocks of intermidiary layers in the generator and discriminator.
+    learning_rate: `float` (default=0.001)
+        Learning rate for the Adam optimizer.
     """
 
-    def __init__(self):
+    def __init__(self, n_residual_blocks=6, learning_rate=0.001):
+
         # Input shape
         self.channels   = 3
 
@@ -33,7 +41,10 @@ class BeautyFlower:
 
         # Number of blocks of layers to be added in the middle of the sequence.
         # The structures of the blocks are defined in the buildGenerator and buildDiscriminator functions.
-        self.n_residual_blocks = 6
+        self.n_residual_blocks = n_residual_blocks
+
+        # The learning rate for the Adam optimizer used in the subnets.
+        self.learning_rate = learning_rate
 
         # Make the discriminator and generator
         self.generator      = self.buildGenerator()
@@ -41,7 +52,7 @@ class BeautyFlower:
 
         self.generator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
-                        optimizer=Adam())
+                        optimizer=Adam(self.learning_rate))
 
     def buildGenerator(self):
         """Builds the generator of the network using building blocks of layers
