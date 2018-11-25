@@ -31,10 +31,6 @@ class BeautyFlower:
         self.gf = 16
         self.df = 16
 
-        # Calculate output shape of D (PatchGAN)
-        patch = int(self.hr_height / 2**4)
-        self.disc_patch = (patch, patch, 1)
-
         # Number of blocks of layers to be added in the middle of the sequence.
         # The structures of the blocks are defined in the buildGenerator and buildDiscriminator functions.
         self.n_residual_blocks = 6
@@ -46,13 +42,6 @@ class BeautyFlower:
         self.generator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
                         optimizer=Adam())
-
-        # Image features
-        # self.vgg            = self.buildVgg()
-        # self.vgg.trainable = False
-        # self.vgg.compile(loss='mse',
-        #     optimizer=Adam(),
-        #     metrics=['accuracy'])
 
     def buildGenerator(self):
         """Builds the generator of the network using building blocks of layers
@@ -114,21 +103,6 @@ class BeautyFlower:
         g_loss = self.generator.train_on_batch(lowResData, highResData)
 
         return g_loss
-
-    def buildVgg(self):
-        """
-        Builds a pre-trained VGG19 model that outputs image features extracted at the
-        third block of the model
-        """
-        vgg = VGG19(weights="imagenet")
-        # See architecture at: https://github.com/keras-team/keras/blob/master/keras/applications/vgg19.py
-        vgg.outputs = [vgg.layers[9].output]
-        img = Input(shape=self.hr_shape)
-
-        # Extract image features
-        img_features = vgg(img)
-
-        return Model(img, img_features)
     
     def generateImage(self, image):
         generatedHighRes = self.generator.predict(image)
