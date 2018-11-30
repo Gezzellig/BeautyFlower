@@ -1,7 +1,7 @@
 """Functions relating to the structure of the network.
 """
 
-from keras.layers import Input, BatchNormalization, Activation, Add
+from keras.layers import Input, BatchNormalization, Activation, Add, concatenate
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
@@ -58,43 +58,49 @@ class BeautyFlower:
         # Input layer with the shape of the low-res images
         inputLayer = Input(shape=self.lr_shape)
 
-        def generatorBlock(layer_input, filters):
-            """Residual block for the generator based on the SRGAN blocks
+        def denseFactor(layer_input, filters):
+            """Single layer in the dense blocks
             """
-            d = Conv2D(filters, kernel_size=3, strides=1, padding='same')(layer_input)
-            d = Activation('relu')(d)
-            d = BatchNormalization(momentum=0.8)(d)
-            d = Conv2D(filters, kernel_size=3, strides=1, padding='same')(d)
-            d = BatchNormalization(momentum=0.8)(d)
-            d = Add()([d, layer_input])
-            return d
+            layer = layer_input
 
-        def upsamplingBlock(layer_input):
-            """Upsampling layer based on SRGAN blockss"""
-            u = UpSampling2D(size=2)(layer_input)
-            u = Conv2D(64, kernel_size=3, strides=1, padding='same')(u)
-            u = Activation('relu')(u)
-            return u
+            layer = BatchNormalization(momentum=0.8)(layer)
+            layer = Conv2D(filters, kernel_size=3, strides=1, padding='same')(layer)
+            layer = Activation('relu')(layer)
+
+            return layer
+        
+        def denseBlock(layer_inputs, filters, amount_layers):
+            """Block of dense factors with dense connections
+            """
+            concatenated_inputs = layer_inputs
+
+            for i in range(amount_layers):
+                x = denseFactor(concatenated_inputs, filters)
+                concatenated_inputs = concatenate([concatenated_inputs, x], axis=3)
+
+            return concatenated_inputs
+
+        # Scale variable upsampling
+        upsample_scale  = 2
+        initial_filters = 16
+
+        current_filter = initial_filters * upsample_scale
 
         # First block after the input layer
-        c1 = Conv2D(16, kernel_size=9, strides=1, padding='same')(inputLayer)
-        c1 = Activation('relu')(c1)
+        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(inputLayer)
 
-        # Make a number of residual blocks each connected to the previous layer
-        r = generatorBlock(c1, self.gf)
-        for _ in range(self.n_residual_blocks - 1):
-            r = generatorBlock(r, self.gf)
+        d1 = denseBlock(c1, current_filter, 3)
 
-        # Post-residual block
-        c2 = Conv2D(16, kernel_size=3, strides=1, padding='same')(r)
-        c2 = BatchNormalization(momentum=0.8)(c2)
-        c2 = Add()([c2, c1])
+        c2 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(d1)
 
-        # Upsampling layer
-        upsamplingLayer = upsamplingBlock(c2)
+        d2 = denseBlock(c2, current_filter, 3)
+
+        c3 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(d2)
+
+        d3 = denseBlock(c3, current_filter, 3)
 
         # Obtain high-resolution image
-        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(upsamplingLayer)
+        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d3)
 
         return Model(inputLayer, generatedOutput)
 
