@@ -7,7 +7,7 @@ from keras.models import Model
 from keras.optimizers import Adam
 
 class superGAN:
-    def __init__():
+    def __init__(self):
         # Input shape
         self.channels   = 3
 
@@ -28,5 +28,5 @@ class superGAN:
         # Build the networks
         self.build_generator()
 
-    def build_generator():
+    def build_generator(self):
         pass
