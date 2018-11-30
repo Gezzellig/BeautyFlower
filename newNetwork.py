@@ -29,4 +29,5 @@ class superGAN:
         self.build_generator()
 
     def build_generator(self):
-        pass
+        # Input layer with the shape of the low-res images
+        input_layer = Input(shape=self.lr_shape)
