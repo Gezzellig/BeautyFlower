@@ -1,7 +1,7 @@
 """Functions relating to the structure of the network.
 """
 
-from keras.layers import Input, BatchNormalization, Activation, Add, concatenate
+from keras.layers import Input, BatchNormalization, Activation, Add, concatenate, LeakyReLU, Dropout, Dense
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
@@ -74,7 +74,7 @@ class BeautyFlower:
             """
             concatenated_inputs = layer_inputs
 
-            for i in range(amount_layers):
+            for _ in range(amount_layers):
                 x = denseFactor(concatenated_inputs, filters)
                 concatenated_inputs = concatenate([concatenated_inputs, x], axis=3)
 
@@ -82,7 +82,7 @@ class BeautyFlower:
 
         # Scale variable upsampling
         upsample_scale  = 2
-        initial_filters = 16
+        initial_filters = self.lr_height
 
         current_filter = initial_filters * upsample_scale
 
@@ -102,7 +102,48 @@ class BeautyFlower:
     def buildDiscriminator(self):
         """Builds the discriminator of the network using building blocks of layers
         """
-        pass
+
+        def denseFactor(layer_input, filters):
+            """Single layer in the dense blocks
+            """
+            layer = layer_input
+
+            layer = Conv2D(filters, kernel_size=3, strides=1, padding='same')(layer)
+            layer = BatchNormalization(momentum=0.8)(layer)
+            layer = LeakyReLU(alpha=0.2)(layer)
+            layer = Dropout(0.25)(layer)
+
+            return layer
+
+        def denseBlock(layer_inputs, filters, amount_layers):
+            """Block of dense factors with dense connections
+            """
+            concatenated_inputs = layer_inputs
+            filter_multiplier   = 2
+
+            for _ in range(amount_layers):
+                x = denseFactor(concatenated_inputs, filters)
+                concatenated_inputs = concatenate([concatenated_inputs, x], axis=3)
+                filters = filters * filter_multiplier
+            return concatenated_inputs
+
+        # Input layer with the shape of the high-res images
+        inputLayer = Input(shape=self.hr_shape)
+        current_filters = self.hr_height
+
+        # Initial layers
+        c1 = Conv2D(current_filters, kernel_size=3, strides=1, padding='same')(inputLayer)
+        l1 = LeakyReLU(alpha=0.2)(c1)
+        d1 = Dropout(0.25)(l1)
+
+        # Denseblocks
+        db1 = denseBlock(d1, current_filters, amount_layers=3)
+
+        # Get single activation
+        flat1  = Flatten()(db1)
+        dense1 = Dense(1, activation="sigmoid")(flat1)
+
+        return Model(inputLayer, dense1)
 
     def trainGenerator(self, lowResData, highResData):
         # For now set this equal to the length of the data we give it
