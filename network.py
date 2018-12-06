@@ -86,21 +86,16 @@ class BeautyFlower:
 
         current_filter = initial_filters * upsample_scale
 
+        # Upsample the input by a factor of 2
+        u1 = UpSampling2D((upsample_scale, upsample_scale))(inputLayer)
+
         # First block after the input layer
-        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(inputLayer)
+        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(u1)
 
         d1 = denseBlock(c1, current_filter, 3)
 
-        c2 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(d1)
-
-        d2 = denseBlock(c2, current_filter, 3)
-
-        c3 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(d2)
-
-        d3 = denseBlock(c3, current_filter, 3)
-
         # Obtain high-resolution image
-        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d3)
+        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d1)
 
         return Model(inputLayer, generatedOutput)
 
