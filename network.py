@@ -1,7 +1,7 @@
 """Functions relating to the structure of the network.
 """
 import numpy as np
-from keras.layers import Input, BatchNormalization, Activation, Add, concatenate, LeakyReLU, Dropout, Dense
+from keras.layers import Input, BatchNormalization, Activation, Add, concatenate, LeakyReLU, Dropout, Dense, Flatten
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
