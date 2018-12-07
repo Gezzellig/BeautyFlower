@@ -1,6 +1,6 @@
 """Functions relating to the structure of the network.
 """
-
+import numpy as np
 from keras.layers import Input, BatchNormalization, Activation, Add, concatenate, LeakyReLU, Dropout, Dense
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
@@ -145,11 +145,24 @@ class BeautyFlower:
 
         return Model(inputLayer, dense1)
 
-    def trainGenerator(self, lowResData, highResData):
+    def train(self, lr_images, hr_images, batch_size=100):
+        # List of 1's as the positive feedback for the real images
+        postive_feedback  = np.ones(1, batch_size)
+
+        # List of 0's as the negative feedback for the fake images
+        negative_feedback = np.zeros(1, batch_size)
+
+        # Rescale the images from -1 to 1
+        lr_images = (lr_images.astype(np.float32) - 127.5) / 127.5
+        hr_images = (hr_images.astype(np.float32) - 127.5) / 127.5
+        pass
+
+    def trainGenerator(self, epochs, lowResData, highResData):
         # For now set this equal to the length of the data we give it
         # TODO implement proper batch size and data loading
 
         # Train the generators
+
         g_loss = self.generator.train_on_batch(lowResData, highResData)
 
         return g_loss
