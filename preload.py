@@ -58,6 +58,19 @@ def load_preload_images(input_folder):
     return np.array(orignal_images), np.array(smaller_images), np.array(bicubic_images)
 
 
+def load_preload_images_batch(input_folder, batch_size, batch_number):
+    orignal_images = []
+    smaller_images = []
+    bicubic_images = []
+    folders = os.listdir(input_folder)
+    for i in range(batch_size * batch_number, min(batch_size * (batch_number+1), len(folders))):
+        original, smaller, bicubic = load_image_versions(input_folder + "/" + folders[i])
+        orignal_images.append(original)
+        smaller_images.append(smaller)
+        bicubic_images.append(bicubic)
+    return np.array(orignal_images), np.array(smaller_images), np.array(bicubic_images)
+
+
 def main():
     if not len(sys.argv) == 3:
         print("Usage: preload.py <input_folder> <output_folder>")
