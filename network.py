@@ -23,13 +23,13 @@ class BeautyFlower:
         self.channels   = 3
 
         # Low-resolution dimensions
-        self.lr_height  = 16
-        self.lr_width   = 16
+        self.lr_height  = 48
+        self.lr_width   = 48
         self.lr_shape = (self.lr_height, self.lr_width, self.channels)
 
         # High-resolution dimensions
-        self.hr_height  = 32
-        self.hr_width   = 32
+        self.hr_height  = 96
+        self.hr_width   = 96
         self.hr_shape = (self.hr_height, self.hr_width, self.channels)
 
         # Define amounts of initial filters in the generator and discriminator
@@ -82,7 +82,7 @@ class BeautyFlower:
 
         # Scale variable upsampling
         upsample_scale  = 2
-        initial_filters = self.lr_height
+        initial_filters = self.gf
 
         current_filter = initial_filters * upsample_scale
 
@@ -129,7 +129,7 @@ class BeautyFlower:
 
         # Input layer with the shape of the high-res images
         inputLayer = Input(shape=self.hr_shape)
-        current_filters = self.hr_height
+        current_filters = self.df
 
         # Initial layers
         c1 = Conv2D(current_filters, kernel_size=3, strides=1, padding='same')(inputLayer)
@@ -146,15 +146,41 @@ class BeautyFlower:
         return Model(inputLayer, dense1)
 
     def train(self, lr_images, hr_images, batch_size=100):
+        ########################
+        # TRAIN DISCRIMINATOR
+        ########################
+        
         # List of 1's as the positive feedback for the real images
         postive_feedback  = np.ones(1, batch_size)
 
         # List of 0's as the negative feedback for the fake images
         negative_feedback = np.zeros(1, batch_size)
 
-        # Rescale the images from -1 to 1
+        # Rescale the image pixel values from -1 to 1
         lr_images = (lr_images.astype(np.float32) - 127.5) / 127.5
         hr_images = (hr_images.astype(np.float32) - 127.5) / 127.5
+
+        # Get random batch from the training set (select [batch_size] ints from range 0 - lr_images_length)
+        idx = np.random.randint(0, lr_images.shape[0], batch_size)
+        
+        # Obtain selected images from batch indices
+        imgs = lr_images[idx]
+
+        # Generate a new random image based on the low res images selected.
+        latent_fake = self.generator.predict(imgs)
+        latent_real = hr_images[idx]
+
+        # Start training on real images, and then on fake images and calculate the loss
+        d_loss_real = self.discriminator.train_on_batch(latent_real, postive_feedback)
+        d_loss_fake = self.discriminator.train_on_batch(latent_fake, negative_feedback)
+
+        # Combine the losses from the real and the fake
+        d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
+
+
+        ########################
+        # TRAIN GENERATOR
+        ########################
         pass
 
     def trainGenerator(self, epochs, lowResData, highResData):
