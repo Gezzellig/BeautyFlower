@@ -41,7 +41,7 @@ def preload_all_images(input_folder, output_folder):
 def load_image_versions(folder_name):
     original = imageio.imread(folder_name + "/original.png")
     smaller = imageio.imread(folder_name + "/smaller.png")
-    bicubic = imageio.imread(folder_name + "/original.png")
+    bicubic = imageio.imread(folder_name + "/bicubic.png")
     return original, smaller, bicubic
 
 
