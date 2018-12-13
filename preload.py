@@ -2,6 +2,7 @@ import os
 import sys
 import imageio
 from scipy import misc as ms
+import numpy as np
 from tqdm import tqdm
 
 
@@ -49,12 +50,12 @@ def load_preload_images(input_folder):
     smaller_images = []
     bicubic_images = []
     folders = os.listdir(input_folder)
-    for i in tqdm(range(len(folders)), desc=" Loading the preloaded images"):
+    for i in tqdm(range(len(folders)), desc=" Loading the preloaded images from: {}".format(input_folder)):
         original, smaller, bicubic = load_image_versions(input_folder + "/" + folders[i])
         orignal_images.append(original)
         smaller_images.append(smaller)
         bicubic_images.append(bicubic)
-    return orignal_images, smaller_images, bicubic_images
+    return np.array(orignal_images), np.array(smaller_images), np.array(bicubic_images)
 
 
 def main():
@@ -70,12 +71,12 @@ def direct_load(input_folder):
     orignal_images = []
     smaller_images = []
     bicubic_images = []
-    for i in tqdm(range(len(image_names)), desc=" loading images directly"):
+    for i in tqdm(range(len(image_names)), desc=" loading images directly, from: {}".format(input_folder)):
         original, smaller, bicubic = preload_image(input_folder + "/" + image_names[i])
         orignal_images.append(original)
         smaller_images.append(smaller)
         bicubic_images.append(bicubic)
-    return orignal_images, smaller_images, bicubic_images
+    return np.array(orignal_images), np.array(smaller_images), np.array(bicubic_images)
 
 
 if __name__ == "__main__":
