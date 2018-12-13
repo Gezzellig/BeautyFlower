@@ -44,8 +44,12 @@ class BeautyFlower:
         self.learning_rate = learning_rate
 
         # Make the discriminator and generator
-        self.generator      = self.buildGenerator()
         self.discriminator  = self.buildDiscriminator()
+        self.generator      = self.buildGenerator()
+
+        self.discriminator.compile(loss='binary_crossentropy',
+                        loss_weights=[1e-3],
+                        optimizer=Adam(self.learning_rate))
 
         self.generator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
@@ -137,7 +141,7 @@ class BeautyFlower:
         d1 = Dropout(0.25)(l1)
 
         # Denseblocks
-        db1 = denseBlock(d1, current_filters, amount_layers=3)
+        db1 = denseBlock(d1, current_filters, amount_layers=1)
 
         # Get single activation
         flat1  = Flatten()(db1)
@@ -151,10 +155,10 @@ class BeautyFlower:
         ########################
         
         # List of 1's as the positive feedback for the real images
-        postive_feedback  = np.ones(1, batch_size)
+        postive_feedback  = np.ones(batch_size)
 
         # List of 0's as the negative feedback for the fake images
-        negative_feedback = np.zeros(1, batch_size)
+        negative_feedback = np.zeros(batch_size)
 
         # Rescale the image pixel values from -1 to 1
         lr_images = (lr_images.astype(np.float32) - 127.5) / 127.5
@@ -181,7 +185,6 @@ class BeautyFlower:
         ########################
         # TRAIN GENERATOR
         ########################
-        pass
 
     def trainGenerator(self, epochs, lowResData, highResData):
         # For now set this equal to the length of the data we give it
