@@ -33,8 +33,8 @@ class BeautyFlower:
         self.hr_shape = (self.hr_height, self.hr_width, self.channels)
 
         # Define amounts of initial filters in the generator and discriminator
-        self.gf = 16
-        self.df = 16
+        self.gf = 8
+        self.df = 8
 
         # Number of blocks of layers to be added in the middle of the sequence.
         # The structures of the blocks are defined in the buildGenerator and buildDiscriminator functions.
@@ -88,18 +88,19 @@ class BeautyFlower:
         upsample_scale  = 2
         initial_filters = self.gf
 
-        current_filter = initial_filters * upsample_scale
+        current_filter = initial_filters
 
         # Upsample the input by a factor of 2
-        u1 = UpSampling2D((upsample_scale, upsample_scale))(inputLayer)
+        #u1 = UpSampling2D((upsample_scale, upsample_scale))(inputLayer)
 
         # First block after the input layer
-        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(u1)
+        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(inputLayer)
+        r1 = Activation('relu')(c1)
+        d1 = denseBlock(r1, current_filter, 3)
 
-        d1 = denseBlock(c1, current_filter, 3)
-
+        u1 = UpSampling2D((upsample_scale, upsample_scale))(d1)
         # Obtain high-resolution image
-        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d1)
+        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(u1)
 
         return Model(inputLayer, generatedOutput)
 
@@ -149,7 +150,7 @@ class BeautyFlower:
 
         return Model(inputLayer, dense1)
 
-    def train(self, lr_images, hr_images, batch_size=100):
+    def train(self, lr_images, hr_images, batch_size=10):
         ########################
         # TRAIN DISCRIMINATOR
         ########################
@@ -189,7 +190,7 @@ class BeautyFlower:
         g_loss = self.generator.train_on_batch(lr_images[idx], hr_images[idx])
 
 
-    def trainGenerator(self, epochs, lowResData, highResData):
+    def train_generator(self, lowResData, highResData):
         # For now set this equal to the length of the data we give it
         # TODO implement proper batch size and data loading
 
@@ -199,6 +200,14 @@ class BeautyFlower:
 
         return g_loss
     
-    def generateImage(self, image):
-        generatedHighRes = self.generator.predict(image)
+    def generate_image(self, image):
+        generatedHighRes = self.generator.predict_on_batch(image)
         return generatedHighRes
+
+    def store_weights(self, filename):
+        self.generator.save_weights("trained_networks/" + filename + '_g.h5')
+        self.discriminator.save_weights("trained_networks/" + filename + '_d.h5')
+
+    def load_weights(self, filename):
+        self.generator.load_weights("trained_networks/" + filename + '_g.h5')
+        self.discriminator.load_weights("trained_networks/" + filename + '_d.h5')
