@@ -5,6 +5,7 @@ from keras.layers import Input, BatchNormalization, Activation, Add, concatenate
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
+import matplotlib.pyplot as plt
 
 class BeautyFlower:
     """The `BeautyFlower` GAN class.
@@ -55,12 +56,10 @@ class BeautyFlower:
                         loss_weights=[1e-3],
                         optimizer=Adam(self.learning_rate))
 
+
     def buildGenerator(self):
         """Builds the generator of the network using building blocks of layers
         """
-
-        # Input layer with the shape of the low-res images
-        inputLayer = Input(shape=self.lr_shape)
 
         def denseFactor(layer_input, filters):
             """Single layer in the dense blocks
@@ -90,6 +89,9 @@ class BeautyFlower:
 
         current_filter = initial_filters * upsample_scale
 
+        # Input layer with the shape of the low-res images
+        inputLayer = Input(shape=self.lr_shape)
+
         # Upsample the input by a factor of 2
         u1 = UpSampling2D((upsample_scale, upsample_scale))(inputLayer)
 
@@ -99,9 +101,12 @@ class BeautyFlower:
         d1 = denseBlock(c1, current_filter, 3)
 
         # Obtain high-resolution image
-        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d1)
+        # generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d1)
+        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='linear')(d1)
 
         return Model(inputLayer, generatedOutput)
+
+
 
     def buildDiscriminator(self):
         """Builds the discriminator of the network using building blocks of layers
@@ -172,6 +177,10 @@ class BeautyFlower:
 
         # Generate a new random image based on the low res images selected.
         latent_fake = self.generator.predict(imgs)
+        # print(((lr_images+1)*127.5).astype(np.uint8)[0])
+        # plt.figure()
+        # plt.imshow(((lr_images+1)*127.5).astype(np.uint8)[0])
+        # plt.show()
         latent_real = hr_images[idx]
 
         # Start training on real images, and then on fake images and calculate the loss

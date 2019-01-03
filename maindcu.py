@@ -1,11 +1,15 @@
 import network
 from tqdm import tqdm
 from preload import load_preload_images_batch
+import matplotlib.pyplot as plt
+
 
 gan = network.BeautyFlower()
+
 print("generator summary:")
 gan.generator.summary()
 input()
+
 print("discriminator summary:")
 gan.discriminator.summary()
 
