@@ -28,6 +28,11 @@ class BeautyFlower:
         self.lr_width   = 48
         self.lr_shape = (self.lr_height, self.lr_width, self.channels)
 
+        # bicubic dimensions
+        self.bc_height  = 96
+        self.bc_width   = 96
+        self.bc_shape = (self.bc_height, self.bc_width, self.channels)
+
         # High-resolution dimensions
         self.hr_height  = 96
         self.hr_width   = 96
@@ -84,25 +89,25 @@ class BeautyFlower:
             return concatenated_inputs
 
         # Scale variable upsampling
-        upsample_scale  = 2
+        # upsample_scale  = 2
         initial_filters = self.gf
 
-        current_filter = initial_filters * upsample_scale
+        current_filter = initial_filters
 
         # Input layer with the shape of the low-res images
-        inputLayer = Input(shape=self.lr_shape)
+        inputLayer = Input(shape=self.bc_shape)
 
         # Upsample the input by a factor of 2
-        u1 = UpSampling2D((upsample_scale, upsample_scale))(inputLayer)
+        #u1 = UpSampling2D((upsample_scale, upsample_scale))(inputLayer)
 
         # First block after the input layer
-        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(u1)
+        c1 = Conv2D(current_filter, kernel_size=9, strides=1, padding='same')(inputLayer)
 
         d1 = denseBlock(c1, current_filter, 3)
 
         # Obtain high-resolution image
         # generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d1)
-        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='linear')(d1)
+        generatedOutput = Conv2D(self.channels, kernel_size=9, strides=1, padding='same', activation='tanh')(d1)
 
         return Model(inputLayer, generatedOutput)
 
@@ -154,7 +159,9 @@ class BeautyFlower:
 
         return Model(inputLayer, dense1)
 
-    def train(self, lr_images, hr_images, batch_size=100):
+
+
+    def train(self, bicubics, hr_images, batch_size=100):
         ########################
         # TRAIN DISCRIMINATOR
         ########################
@@ -166,21 +173,26 @@ class BeautyFlower:
         negative_feedback = np.zeros(batch_size)
 
         # Rescale the image pixel values from -1 to 1
-        lr_images = (lr_images.astype(np.float32) - 127.5) / 127.5
-        hr_images = (hr_images.astype(np.float32) - 127.5) / 127.5
+        #bicubics = (bicubics.astype(np.float32) - 127.5) / 127.5
+        bicubics = (bicubics.astype(np.float32)) / 255.0
+        #hr_images = (hr_images.astype(np.float32) - 127.5) / 127.5
+        hr_images = (hr_images.astype(np.float32)) / 255.0
 
-        # Get random batch from the training set (select [batch_size] ints from range 0 - lr_images_length)
-        idx = np.random.randint(0, lr_images.shape[0], batch_size)
-        
+        # Get random batch from the training set (select [batch_size] ints from range 0 - bicubics_length)
+        idx = np.random.randint(0, bicubics.shape[0], batch_size)
+
         # Obtain selected images from batch indices
-        imgs = lr_images[idx]
+        imgs = bicubics[idx]
 
         # Generate a new random image based on the low res images selected.
         latent_fake = self.generator.predict(imgs)
-        # print(((lr_images+1)*127.5).astype(np.uint8)[0])
-        # plt.figure()
-        # plt.imshow(((lr_images+1)*127.5).astype(np.uint8)[0])
-        # plt.show()
+        print(((latent_fake+1)*127.5).astype(np.uint8)[0])
+        plt.figure()
+        plt.subplot(1,2,1)
+        plt.imshow(bicubics[0])
+        plt.subplot(1,2,2)
+        plt.imshow(latent_fake[0])
+        plt.show()
         latent_real = hr_images[idx]
 
         # Start training on real images, and then on fake images and calculate the loss
@@ -195,7 +207,7 @@ class BeautyFlower:
         ########################
 
         # Train generator on same random indices as the discriminator
-        g_loss = self.generator.train_on_batch(lr_images[idx], hr_images[idx])
+        g_loss = self.generator.train_on_batch(bicubics[idx], hr_images[idx])
 
 
     def trainGenerator(self, epochs, lowResData, highResData):

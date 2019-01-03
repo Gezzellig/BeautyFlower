@@ -17,7 +17,9 @@ gan.discriminator.summary()
 EPOCHS       = 1
 INPUT_FOLDER = "data/learnset"
 
+batch_size = 2
+
 for epoch in range(EPOCHS):
     for batch_idx in tqdm(range (20)):
-        hr_images, lr_images, bicubic = load_preload_images_batch(INPUT_FOLDER, batch_size=1, batch_number=batch_idx)
-        gan.train(lr_images, hr_images)
+        hr_images, lr_images, bicubic = load_preload_images_batch(INPUT_FOLDER, batch_size=batch_size, batch_number=batch_idx)
+        gan.train(bicubic, hr_images, batch_size)
