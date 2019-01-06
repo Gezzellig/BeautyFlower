@@ -177,20 +177,25 @@ class BeautyFlower:
         ########################
         
         # List of 1's as the positive feedback for the real images
-        positive_feedback  = np.ones(batch_size)
+        # positive_feedback  = np.ones(batch_size)
+        positive_feedback = [1] * batch_size
 
         # List of 0's as the negative feedback for the fake images
-        negative_feedback = np.zeros(batch_size)
+        # negative_feedback = np.zeros(batch_size)
+        negative_feedback = [0] * batch_size
 
         # Rescale the image pixel values from 0 to 1
-        bicubics = (bicubics.astype(np.float32)) / 255.0
-        hr_images = (hr_images.astype(np.float32)) / 255.0
+        # bicubics = (bicubics.astype(np.float32)) / 255.0
+        bicubics = bicubics/255.0
+        # hr_images = (hr_images.astype(np.float32)) / 255.0
+        hr_images = hr_images/255.0
 
         # Get random batch from the training set (select [batch_size] ints from range 0 - bicubics_length)
-        idx = np.random.randint(0, bicubics.shape[0], batch_size)
+        # idx = np.random.randint(0, bicubics.shape[0], batch_size)
 
         # Obtain selected images from batch indices
-        imgs = bicubics[idx]
+        # imgs = bicubics[idx]
+        imgs = bicubics
 
         # Generate a new random image based on the low res images selected.
         latent_fake = self.generator.predict(imgs)
@@ -207,7 +212,7 @@ class BeautyFlower:
         d_loss_fake = self.discriminator.train_on_batch(latent_fake, negative_feedback)
 
         # Combine the losses from the real and the fake
-        d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
+        # d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
         # print("Discriminator loss: " + str(d_loss_average))
 
         ########################
