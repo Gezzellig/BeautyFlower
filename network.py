@@ -196,13 +196,14 @@ class BeautyFlower:
 
         # Combine the losses from the real and the fake
         d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
-
+        print(d_loss_average)
         ########################
         # TRAIN GENERATOR
         ########################
 
         # Train generator on same random indices as the discriminator
         g_loss = self.generator.train_on_batch(bicubics[idx], hr_images[idx])
+        print(g_loss)
 
 
     def train_generator(self, lowResData, highResData):
