@@ -8,22 +8,26 @@ gan = network.BeautyFlower()
 
 print("generator summary:")
 gan.generator.summary()
-# input()
+input()
 print("discriminator summary:")
 gan.discriminator.summary()
+input()
+print("combined MODELS")
+gan.combined_model.summary()
 
 # Amount of times the whole dataset is trained
-GEN_EPOCHS   = 3
 EPOCHS       = 1
 INPUT_FOLDER = "data/learnset"
+batch_size = 1
 
-batch_size = 2
+
+#gan.load_weights('dcu_test1')
 
 for epoch in range(EPOCHS):
     for batch_idx in tqdm(range (20)):
         hr_images, lr_images, bicubic = load_preload_images_batch(INPUT_FOLDER, batch_size=batch_size, batch_number=batch_idx)
         gan.train(bicubic, hr_images, batch_size)
 
-# Save network
-# gan.store_weights('dcu')
+
+gan.store_weights('dcu_test1')
 

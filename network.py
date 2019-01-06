@@ -53,11 +53,25 @@ class BeautyFlower:
         self.discriminator  = self.buildDiscriminator()
         self.generator      = self.buildGenerator()
 
+        #we do not want to train the discriminator within the combined model,
+        # because it is already trained 1 step before that.
+        self.discriminator.trainable = False
+
         self.discriminator.compile(loss='binary_crossentropy',
+                        loss_weights=[1e-3],
+                        optimizer=Adam(self.learning_rate),
+                        metrics=['accuracy'])
+
+        self.generator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
                         optimizer=Adam(self.learning_rate))
 
-        self.generator.compile(loss='binary_crossentropy',
+        #define pipeline of combined models.
+        self.input_generator = Input(shape=self.bc_shape)
+        self.output_generator = self.generator(self.input_generator)
+        self.output_discriminator = self.discriminator(self.output_generator)
+        self.combined_model = Model(self.input_generator, self.output_discriminator)
+        self.combined_model.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
                         optimizer=Adam(self.learning_rate))
 
@@ -163,15 +177,13 @@ class BeautyFlower:
         ########################
         
         # List of 1's as the positive feedback for the real images
-        postive_feedback  = np.ones(batch_size)
+        positive_feedback  = np.ones(batch_size)
 
         # List of 0's as the negative feedback for the fake images
         negative_feedback = np.zeros(batch_size)
 
-        # Rescale the image pixel values from -1 to 1
-        #bicubics = (bicubics.astype(np.float32) - 127.5) / 127.5
+        # Rescale the image pixel values from 0 to 1
         bicubics = (bicubics.astype(np.float32)) / 255.0
-        #hr_images = (hr_images.astype(np.float32) - 127.5) / 127.5
         hr_images = (hr_images.astype(np.float32)) / 255.0
 
         # Get random batch from the training set (select [batch_size] ints from range 0 - bicubics_length)
@@ -182,43 +194,35 @@ class BeautyFlower:
 
         # Generate a new random image based on the low res images selected.
         latent_fake = self.generator.predict(imgs)
-        plt.figure()
-        plt.subplot(1,2,1)
-        plt.imshow(bicubics[0])
-        plt.subplot(1,2,2)
-        plt.imshow(latent_fake[0])
-        plt.show()
         latent_real = hr_images[idx]
+        # plt.figure()
+        # plt.subplot(1,2,1)
+        # plt.imshow(bicubics[0])
+        # plt.subplot(1,2,2)
+        # plt.imshow(latent_fake[0])
+        # plt.show()
 
         # Start training on real images, and then on fake images and calculate the loss
-        d_loss_real = self.discriminator.train_on_batch(latent_real, postive_feedback)
+        d_loss_real = self.discriminator.train_on_batch(latent_real, positive_feedback)
         d_loss_fake = self.discriminator.train_on_batch(latent_fake, negative_feedback)
 
         # Combine the losses from the real and the fake
         d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
-        print(d_loss_average)
+        print("Discriminator loss: " + str(d_loss_average))
+
         ########################
-        # TRAIN GENERATOR
+        # TRAIN COMBINED MODEL OF GENERATOR AND DISCRIMINATOR
         ########################
 
         # Train generator on same random indices as the discriminator
-        g_loss = self.generator.train_on_batch(bicubics[idx], hr_images[idx])
-        print(g_loss)
+        g_loss = self.combined_model.train_on_batch( bicubics[idx], positive_feedback )
+        print("Combined Model loss: " + str(g_loss))
 
 
-    def train_generator(self, lowResData, highResData):
-        # For now set this equal to the length of the data we give it
-        # TODO implement proper batch size and data loading
 
-        # Train the generators
-
-        g_loss = self.generator.train_on_batch(lowResData, highResData)
-
-        return g_loss
-    
-    def generate_image(self, image):
-        generatedHighRes = self.generator.predict_on_batch(image)
-        return generatedHighRes
+    # def generate_image(self, image):
+    #     generatedHighRes = self.generator.predict_on_batch(image)
+    #     return generatedHighRes
 
     def store_weights(self, filename):
         self.generator.save_weights("trained_networks/" + filename + '_g.h5')
