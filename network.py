@@ -1,11 +1,11 @@
 """Functions relating to the structure of the network.
 """
 import numpy as np
+from tensorflow import keras
 from keras.layers import Input, BatchNormalization, Activation, Add, concatenate, LeakyReLU, Dropout, Dense, Flatten
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
-import matplotlib.pyplot as plt
 
 class BeautyFlower:
     """The `BeautyFlower` GAN class.
@@ -208,7 +208,7 @@ class BeautyFlower:
 
         # Combine the losses from the real and the fake
         d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
-        print("Discriminator loss: " + str(d_loss_average))
+        # print("Discriminator loss: " + str(d_loss_average))
 
         ########################
         # TRAIN COMBINED MODEL OF GENERATOR AND DISCRIMINATOR
@@ -216,7 +216,7 @@ class BeautyFlower:
 
         # Train generator on same random indices as the discriminator
         g_loss = self.combined_model.train_on_batch( bicubics[idx], positive_feedback )
-        print("Combined Model loss: " + str(g_loss))
+        # print("Combined Model loss: " + str(g_loss))
 
 
 

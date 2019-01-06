@@ -3,7 +3,6 @@ import sys
 import imageio
 from scipy import misc as ms
 import numpy as np
-from tqdm import tqdm
 
 
 def image_difference(image1, image2):
@@ -33,7 +32,7 @@ def preload_image(image_path):
 
 def preload_all_images(input_folder, output_folder):
     image_names = os.listdir(input_folder)
-    for i in tqdm(range(len(image_names)), desc=" Preloading images"):
+    for i in range(len(image_names)):
         original, smaller, bicubic = preload_image(input_folder + "/" + image_names[i])
         store_image_versions(output_folder + "/image{:04d}".format(i), original, smaller, bicubic)
 
@@ -50,7 +49,7 @@ def load_preload_images(input_folder):
     smaller_images = []
     bicubic_images = []
     folders = os.listdir(input_folder)
-    for i in tqdm(range(len(folders)), desc=" Loading the preloaded images from: {}".format(input_folder)):
+    for i in range(len(folders)):
         original, smaller, bicubic = load_image_versions(input_folder + "/" + folders[i])
         orignal_images.append(original)
         smaller_images.append(smaller)
@@ -84,7 +83,7 @@ def direct_load(input_folder):
     orignal_images = []
     smaller_images = []
     bicubic_images = []
-    for i in tqdm(range(len(image_names)), desc=" loading images directly, from: {}".format(input_folder)):
+    for i in range(len(image_names)):
         original, smaller, bicubic = preload_image(input_folder + "/" + image_names[i])
         orignal_images.append(original)
         smaller_images.append(smaller)
