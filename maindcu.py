@@ -1,5 +1,5 @@
 import network
-# from preload import load_preload_images_batch
+from preload import load_preload_images_batch
 
 print_summaries = True
 
