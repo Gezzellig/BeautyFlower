@@ -85,3 +85,5 @@ learnset/*
 
 .idea/*
 venv/*
+
+slurm*
