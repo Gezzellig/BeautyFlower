@@ -39,8 +39,14 @@ def preload_all_images(input_folder, output_folder):
 
 def load_image_versions(folder_name):
     original = imageio.imread(folder_name + "/original.png")
+    print("original")
+    sys.stdout.flush()
     smaller = imageio.imread(folder_name + "/smaller.png")
+    print("smaller")
+    sys.stdout.flush()
     bicubic = imageio.imread(folder_name + "/bicubic.png")
+    print("bicubic")
+    sys.stdout.flush()
     return original, smaller, bicubic
 
 
@@ -62,11 +68,17 @@ def load_preload_images_batch(input_folder, batch_size, batch_number):
     smaller_images = []
     bicubic_images = []
     folders = os.listdir(input_folder)
+    print("start loading images")
+    sys.stdout.flush()
     for i in range(batch_size * batch_number, min(batch_size * (batch_number+1), len(folders))):
+        print("plaatje laden")
+        sys.stdout.flush()
         original, smaller, bicubic = load_image_versions(input_folder + "/" + folders[i])
         orignal_images.append(original)
         smaller_images.append(smaller)
         bicubic_images.append(bicubic)
+        print("plaatje geladen")
+        sys.stdout.flush()
     return np.array(orignal_images), np.array(smaller_images), np.array(bicubic_images)
 
 
