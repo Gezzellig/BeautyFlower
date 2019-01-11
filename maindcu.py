@@ -2,15 +2,16 @@ import network
 from preload import load_preload_images_batch
 
 import sys
+import time
 
 print_summaries = True
 
 #PARAMETERS:
 # Epoch = Amount of times the whole dataset is trained
-EPOCHS          = 1
+EPOCHS          = 5
 INPUT_FOLDER    = "data/learnset"
-batch_size 	= 100
-AMOUNT_BATCHES  = 5000 / batch_size
+batch_size 	= 2
+AMOUNT_BATCHES  = 10 / batch_size
 
 print("Building the gan")
 
@@ -41,5 +42,7 @@ for epoch in range(EPOCHS):
 
 
 
-#	if epoch % 250 == 0:
-# 		gan.store_weights('dcu_test1')
+	if epoch % 1 == 0:
+		filename = "gan{}e{}".format(time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()), epoch)
+		gan.store_weights(filename)
+		print("stored: {}".format(filename))
