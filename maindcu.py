@@ -3,6 +3,7 @@ from preload import load_preload_images_batch
 
 import sys
 import time
+import os
 
 print_summaries = True
 
@@ -30,6 +31,9 @@ if print_summaries:
 	gan.combined_model.summary()
 
 #gan.load_weights('dcu_test1')
+foldername = time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime());
+print("output is stored in: {}".format(foldername))
+os.mkdir("trained_networks/{}".format(foldername))
 
 sys.stdout.flush()
 
@@ -43,6 +47,6 @@ for epoch in range(EPOCHS):
 
 
 	if epoch % 1 == 0:
-		filename = "gan{}e{}".format(time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()), epoch)
+		filename = "{}/gan{}e{}".format(foldername, time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()), epoch)
 		gan.store_weights(filename)
 		print("stored: {}".format(filename))
