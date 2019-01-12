@@ -87,3 +87,5 @@ learnset/*
 venv/*
 
 slurm*
+
+trained_networks/*
