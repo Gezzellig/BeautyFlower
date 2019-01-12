@@ -3,6 +3,7 @@ import sys, os
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
+from skimage import measure
 
 # gan_file_name = sys.argv[1]
 # image_file_name = sys.argv[2]
@@ -32,14 +33,21 @@ while(True):
     chosen_image = input ()
     if int(chosen_image) == -1:
         exit()
-    image = imageio.imread("data/learnset/image" + str(chosen_image) + "/bicubic.png")
-    image_batch = np.array([image])
+    image_bc = imageio.imread("data/learnset/image" + str(chosen_image) + "/bicubic.png")
+    image_or = imageio.imread("data/learnset/image" + str(chosen_image) + "/original.png")
+    image_batch = np.array([image_bc])
     gan = network.BeautyFlower()
     gan.load_weights(chosen_path_model)
     predicted_batch = gan.generator.predict(image_batch, batch_size=1, verbose=1, steps=None)
+    image_pr = predicted_batch[0]
+    psnr = "psnr: {:.4f} decibels".format(measure.compare_psnr(image_or, image_pr))
+    ssim = "ssim: {:.4f}".format(measure.compare_ssim(image_or, image_pr, multichannel=True))
+    print("\n***** Measurements *****")
+    print(psnr)
+    print(ssim)
+
     plt.figure()
-    print(predicted_batch)
     plt.imshow(predicted_batch[0])
     plt.figure()
-    plt.imshow(image)
+    plt.imshow(image_bc)
     plt.show()
