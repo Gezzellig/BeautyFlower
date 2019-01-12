@@ -7,13 +7,14 @@ import os
 
 print ('Argument List:', str(sys.argv))
 
-if len (sys.argv) == 4:
+if len (sys.argv) == 5:
 	EPOCHS = int(sys.argv[1])
 	SAVE_INTERVAL = int(sys.argv[2])
 	batch_size = int(sys.argv[3])
+	DO_GEN_PRETRAIN = int(sys.argv[4])
 else:
 	print ("""Incorrect number of input arguments, please give input arguments in the following format:\n 
-		python3 maindcu.py EPOCHS SAVE_INTERVAL BATCH_SIZE""")
+		python3 maindcu.py EPOCHS SAVE_INTERVAL BATCH_SIZE GEN_PRETRAIN""")
 	exit()
 
 print_summaries = True
@@ -52,7 +53,11 @@ for epoch in range(EPOCHS):
 	sys.stdout.flush()
 	for batch_idx in range (int(AMOUNT_BATCHES)):
 		hr_images, lr_images, bicubic = load_preload_images_batch(INPUT_FOLDER, batch_size=batch_size, batch_number=batch_idx)
-		gan.train(bicubic, hr_images, batch_size)
+		
+		if DO_GEN_PRETRAIN == 0:
+			gan.train(bicubic, hr_images, batch_size)
+		else:
+			gan.pretrain_generator_only(bicubic, hr_images)
 
 
 
