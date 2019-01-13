@@ -72,6 +72,7 @@ class BeautyFlower:
         #define pipeline of combined models.
         self.input_generator = Input(shape=self.bc_shape)
         self.output_generator = self.generator(self.input_generator)
+        self.discriminator.trainable = True
         self.output_discriminator = self.discriminator(self.output_generator)
         self.combined_model = Model(self.input_generator, self.output_discriminator)
         self.combined_model.compile(loss='binary_crossentropy',
@@ -216,7 +217,8 @@ class BeautyFlower:
 
         # Combine the losses from the real and the fake
         d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
-        # print("Discriminator loss: " + str(d_loss_average))
+
+        print("Discriminator loss: " + str(d_loss_average) + " real loss: "+str(d_loss_real)+" fake loss: "+str(d_loss_fake))
 
         ########################
         # TRAIN COMBINED MODEL OF GENERATOR AND DISCRIMINATOR
