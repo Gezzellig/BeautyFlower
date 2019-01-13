@@ -225,11 +225,11 @@ class BeautyFlower:
         ########################
 
         # Train generator on same random indices as the discriminator
-        g_loss = self.combined_model.train_on_batch( bicubics[idx], positive_feedback )
-        # print("Combined Model loss: " + str(g_loss))
+        gan_loss = self.combined_model.train_on_batch( bicubics[idx], positive_feedback )
+        print("Combined Model loss: " + str(gan_loss))
 
     def pretrain_generator_only (self, bicubics, hr_images):
-        g_loss = self.generator.train_on_batch(bicubics, hr_images)
+        gan_loss = self.generator.train_on_batch(bicubics, hr_images)
 
     # def generate_image(self, image):
     #     generatedHighRes = self.generator.predict_on_batch(image)
