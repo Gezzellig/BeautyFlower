@@ -55,7 +55,7 @@ class BeautyFlower:
 
         #we do not want to train the discriminator within the combined model,
         # because it is already trained 1 step before that.
-        self.discriminator.trainable = False
+        self.discriminator.trainable = True
 
         self.discriminator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
