@@ -27,7 +27,7 @@ print("Building the gan")
 gan = network.BeautyFlower()
 
 #PARAMETERS:
-INPUT_FOLDER    = "data/learnset"
+INPUT_FOLDER    = "learnset"
 AMOUNT_BATCHES  = 5000 / batch_size
 
 if print_summaries:
