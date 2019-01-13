@@ -28,6 +28,8 @@ chosen_path_model = chosen_model + "/" + submodels[int(choice)][:-5]
 
 print ("Loading model: " + chosen_path_model)
 
+gan = network.BeautyFlower()
+gan.load_weights(chosen_path_model)
 while(True):
     print ("Predict on which image? (0000 - 4996)\nEnter -1 to exit.")
     chosen_image = input ()
@@ -36,9 +38,12 @@ while(True):
     image_bc = imageio.imread("data/learnset/image" + str(chosen_image) + "/bicubic.png")
     image_or = imageio.imread("data/learnset/image" + str(chosen_image) + "/original.png")
     image_batch = np.array([image_bc])
-    gan = network.BeautyFlower()
-    gan.load_weights(chosen_path_model)
+
     predicted_batch = gan.generator.predict(image_batch, batch_size=1, verbose=1, steps=None)
+    print("original discrimator: {}".format(gan.discriminator.predict(image_batch, batch_size=1, verbose=1, steps=None)))
+    print("prediction discrimator: {}".format(gan.discriminator.predict(predicted_batch, batch_size=1, verbose=1, steps=None)))
+
+
     image_pr = predicted_batch[0]
     psnr = "psnr: {:.4f} decibels".format(measure.compare_psnr(image_or, image_pr))
     ssim = "ssim: {:.4f}".format(measure.compare_ssim(image_or, image_pr, multichannel=True))
