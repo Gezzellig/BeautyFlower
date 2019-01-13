@@ -1,5 +1,6 @@
 import network
-from preload import load_preload_images_batch
+from preload import load_preload_images
+import numpy as np
 
 import sys
 import time
@@ -48,16 +49,23 @@ os.mkdir("trained_networks/{}".format(foldername))
 
 sys.stdout.flush()
 
+hr_images, lr_images, bicubic = load_preload_images(INPUT_FOLDER)
+hr_images_batched = np.split(hr_images, AMOUNT_BATCHES)
+lr_images_batched = np.split(lr_images, AMOUNT_BATCHES)
+bicubic_batched = np.split(bicubic, AMOUNT_BATCHES)
+
+print("Images loaded, time to learn!!")
+
+
+
 for epoch in range(EPOCHS):
 	print( "epoch " + str(epoch) )
 	sys.stdout.flush()
-	for batch_idx in range (int(AMOUNT_BATCHES)):
-		hr_images, lr_images, bicubic = load_preload_images_batch(INPUT_FOLDER, batch_size=batch_size, batch_number=batch_idx)
-		
+	for batch_idx in range (int(AMOUNT_BATCHES)):	
 		if DO_GEN_PRETRAIN == 0:
-			gan.train(bicubic, hr_images, batch_size)
+			gan.train(bicubic_batched[batch_idx], hr_images_batched[batch_idx], batch_size)
 		else:
-			gan.pretrain_generator_only(bicubic, hr_images)
+			gan.pretrain_generator_only(bicubic_batched[batch_idx], hr_images_batched[batch_idx])
 
 
 
