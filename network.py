@@ -55,16 +55,19 @@ class BeautyFlower:
 
         #we do not want to train the discriminator within the combined model,
         # because it is already trained 1 step before that.
-        self.discriminator.trainable = True
+        
 
         self.discriminator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
                         optimizer=Adam(self.learning_rate),
                         metrics=['accuracy'])
 
-        self.generator.compile(loss='binary_crossentropy',
-                        loss_weights=[1e-3],
-                        optimizer=Adam(self.learning_rate))
+        #self.generator.compile(loss='binary_crossentropy',
+        #                loss_weights=[1e-3],
+        #                optimizer=Adam(self.learning_rate))
+
+
+        self.discriminator.trainable = False
 
         #define pipeline of combined models.
         self.input_generator = Input(shape=self.bc_shape)
