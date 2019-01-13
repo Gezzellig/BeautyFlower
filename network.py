@@ -55,20 +55,24 @@ class BeautyFlower:
 
         #we do not want to train the discriminator within the combined model,
         # because it is already trained 1 step before that.
-        self.discriminator.trainable = False
+        
 
         self.discriminator.compile(loss='binary_crossentropy',
                         loss_weights=[1e-3],
                         optimizer=Adam(self.learning_rate),
                         metrics=['accuracy'])
 
-        self.generator.compile(loss='binary_crossentropy',
-                        loss_weights=[1e-3],
-                        optimizer=Adam(self.learning_rate))
+        #self.generator.compile(loss='binary_crossentropy',
+        #                loss_weights=[1e-3],
+        #                optimizer=Adam(self.learning_rate))
+
+
+        self.discriminator.trainable = False
 
         #define pipeline of combined models.
         self.input_generator = Input(shape=self.bc_shape)
         self.output_generator = self.generator(self.input_generator)
+        self.discriminator.trainable = True
         self.output_discriminator = self.discriminator(self.output_generator)
         self.combined_model = Model(self.input_generator, self.output_discriminator)
         self.combined_model.compile(loss='binary_crossentropy',
@@ -213,7 +217,8 @@ class BeautyFlower:
 
         # Combine the losses from the real and the fake
         d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
-        # print("Discriminator loss: " + str(d_loss_average))
+
+        print("Discriminator loss: " + str(d_loss_average) + " real loss: "+str(d_loss_real)+" fake loss: "+str(d_loss_fake))
 
         ########################
         # TRAIN COMBINED MODEL OF GENERATOR AND DISCRIMINATOR
@@ -223,7 +228,8 @@ class BeautyFlower:
         g_loss = self.combined_model.train_on_batch( bicubics[idx], positive_feedback )
         # print("Combined Model loss: " + str(g_loss))
 
-
+    def pretrain_generator_only (self, bicubics, hr_images):
+        g_loss = self.generator.train_on_batch(bicubics, hr_images)
 
     # def generate_image(self, image):
     #     generatedHighRes = self.generator.predict_on_batch(image)
