@@ -6,6 +6,7 @@ from keras.layers import Input, BatchNormalization, Activation, Add, concatenate
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
+from keras.callbacks import TensorBoard
 
 class BeautyFlower:
     """The `BeautyFlower` GAN class.
