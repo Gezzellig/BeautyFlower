@@ -1,11 +1,10 @@
-"""Functions relating to the structure of the network.
-"""
-import numpy as np
 import keras
 from keras.layers import Input, BatchNormalization, Activation, Add, concatenate, LeakyReLU, Dropout, Dense, Flatten
 from keras.layers.convolutional import UpSampling2D, Conv2D
 from keras.models import Model
 from keras.optimizers import Adam
+import numpy as np
+
 
 class BeautyFlower:
     """The `BeautyFlower` GAN class.
@@ -72,7 +71,6 @@ class BeautyFlower:
         #define pipeline of combined models.
         self.input_generator = Input(shape=self.bc_shape)
         self.output_generator = self.generator(self.input_generator)
-        self.discriminator.trainable = True
         self.output_discriminator = self.discriminator(self.output_generator)
         self.combined_model = Model(self.input_generator, self.output_discriminator)
         self.combined_model.compile(loss='binary_crossentropy',
@@ -181,39 +179,35 @@ class BeautyFlower:
         ########################
         
         # List of 1's as the positive feedback for the real images
-        positive_feedback  = np.ones(batch_size)
+        positive_feedback  = np.ones(len(hr_images))
         #positive_feedback = [1] * batch_size
 
         # List of 0's as the negative feedback for the fake images
-        negative_feedback = np.zeros(batch_size)
+        negative_feedback = np.zeros(len(bicubics))
         #negative_feedback = [0] * batch_size
 
-        # Rescale the image pixel values from 0 to 1
-        bicubics = (bicubics.astype(np.float32)) / 255.0
-        #bicubics = bicubics/255.0
-        hr_images = (hr_images.astype(np.float32)) / 255.0
-        #hr_images = hr_images/255.0
-
         # Get random batch from the training set (select [batch_size] ints from range 0 - bicubics_length)
-        idx = np.random.randint(0, bicubics.shape[0], batch_size)
+        #idx = np.random.randint(0, bicubics.shape[0], batch_size)
 
         # Obtain selected images from batch indices
-        imgs = bicubics[idx]
+        #imgs = bicubics[idx]
         #imgs = bicubics
 
-        # Generate a new random image based on the low res images selected.
-        latent_fake = self.generator.predict(imgs)
-        latent_real = hr_images[idx]
-        # plt.figure()
-        # plt.subplot(1,2,1)
-        # plt.imshow(bicubics[0])
-        # plt.subplot(1,2,2)
-        # plt.imshow(latent_fake[0])
-        # plt.show()
+        # Generate fake images on whole dataset.
+        latent_fake = self.generator.predict(bicubics)
+        latent_real = hr_images
+
+
+        #maybe at this?:!!!
+        # tb.set_model(discriminator)
+
 
         # Start training on real images, and then on fake images and calculate the loss
-        d_loss_real = self.discriminator.train_on_batch(latent_real, positive_feedback)
-        d_loss_fake = self.discriminator.train_on_batch(latent_fake, negative_feedback)
+        d_loss_real = self.discriminator.fit(x=latent_real, y=positive_feedback, batch_size=batch_size, epochs=1, verbose=1, callbacks=None, validation_split=0.0, validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0, steps_per_epoch=None, validation_steps=None)
+        d_loss_fake = self.discriminator.fit(x=latent_fake, y=negative_feedback, batch_size=batch_size, epochs=1, verbose=1, callbacks=None, validation_split=0.0, validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0, steps_per_epoch=None, validation_steps=None)
+
+        # d_loss_real = self.discriminator.train_on_batch(latent_real, positive_feedback)
+        # d_loss_fake = self.discriminator.train_on_batch(latent_fake, negative_feedback)
 
         # Combine the losses from the real and the fake
         d_loss_average = 0.5 * np.add(d_loss_real, d_loss_fake)
@@ -221,12 +215,17 @@ class BeautyFlower:
         print("Discriminator loss: " + str(d_loss_average) + " real loss: "+str(d_loss_real)+" fake loss: "+str(d_loss_fake))
 
         ########################
-        # TRAIN COMBINED MODEL OF GENERATOR AND DISCRIMINATOR
+        # TRAIN COMBINED MODEL OF GENERATOR AND DISCRIMINATOR, WHERE ONLY THE GENERATOR TRAINS SINCE DISCRIMINATOR IS SET TO TRAINABLE FALSE.
         ########################
 
         # Train generator on same random indices as the discriminator
-        gan_loss = self.combined_model.train_on_batch( bicubics[idx], positive_feedback )
-        print("Combined Model loss: " + str(gan_loss))
+        #gan_loss = self.combined_model.train_on_batch( bicubics, positive_feedback )
+        g_loss = self.combined_model.fit(x=bicubics, y=positive_feedback, batch_size=batch_size, epochs=1, verbose=1, callbacks=None, validation_split=0.0, validation_data=None, shuffle=True, class_weight=None, sample_weight=None, initial_epoch=0, steps_per_epoch=None, validation_steps=None)
+        
+        print("Combined Model loss (so should be generator only: " + str(g_loss))
+
+
+
 
     def pretrain_generator_only (self, bicubics, hr_images):
         gan_loss = self.generator.train_on_batch(bicubics, hr_images)
