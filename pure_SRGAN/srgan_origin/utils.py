@@ -27,3 +27,11 @@ def downsample_fn(x):
     x = x - 1.
     # x = (x - 0.5)*2
     return x
+
+def upsample_fn(x):
+    # We obtained the Bicubic images by upsampling the downsampled HR images using bicubic kernel with downsampling factor r = 4.
+    x = imresize(x, size=[384, 384], interp='bicubic', mode=None)
+    x = x / (255. / 2.)
+    x = x - 1.
+    # x = (x - 0.5)*2
+    return x

@@ -25,7 +25,7 @@ n_epoch = config.TRAIN.n_epoch
 lr_decay = config.TRAIN.lr_decay
 decay_every = config.TRAIN.decay_every
 
-ni = 1#int(np.sqrt(batch_size))
+ni = int(np.sqrt(batch_size))
 
 def select_target_image(upSampMode):
     if upSampMode == "upBicubic":
@@ -56,17 +56,19 @@ def train(outputDirectory, upSampMode):
     checkpoint_dir = "{}/checkpoint".format(outputDirectory)  # checkpoint_resize_conv
     tl.files.exists_or_mkdir(checkpoint_dir)
 
+    gen_loss_file = open("{}/genLoss.csv".format(outputDirectory), "w")
+    dis_loss_file = open("{}/disLoss.csv".format(outputDirectory), "w")
+    #saver = tf.train.Saver()
+
     ###====================== PRE-LOAD DATA ===========================###
     train_hr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.hr_img_path, regx='.*.png', printable=False))
-    train_lr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.lr_img_path, regx='.*.png', printable=False))
-    valid_hr_img_list = sorted(tl.files.load_file_list(path=config.VALID.hr_img_path, regx='.*.png', printable=False))
-    valid_lr_img_list = sorted(tl.files.load_file_list(path=config.VALID.lr_img_path, regx='.*.png', printable=False))
+    #train_lr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.lr_img_path, regx='.*.png', printable=False))
+    #valid_hr_img_list = sorted(tl.files.load_file_list(path=config.VALID.hr_img_path, regx='.*.png', printable=False))
+    #valid_lr_img_list = sorted(tl.files.load_file_list(path=config.VALID.lr_img_path, regx='.*.png', printable=False))
 
-    if upSampMode == "upBicubic":
-        train_bc_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.bc_img_path, regx='.*.png', printable=False))
-        valid_bc_img_list = sorted(tl.files.load_file_list(path=config.VALID.bc_img_path, regx='.*.png', printable=False))
-    else:
-
+    #if upSampMode == "upBicubic":
+        #train_bc_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.bc_img_path, regx='.*.png', printable=False))
+        #valid_bc_img_list = sorted(tl.files.load_file_list(path=config.VALID.bc_img_path, regx='.*.png', printable=False))
 
     ## If your machine have enough memory, please pre-load the whole train set.
     train_hr_imgs = tl.vis.read_images(train_hr_img_list, path=config.TRAIN.hr_img_path, n_threads=32)
@@ -83,8 +85,8 @@ def train(outputDirectory, upSampMode):
     ###========================== DEFINE MODEL ============================###
     ## train inference
     t_image, t_target_image = select_target_image(upSampMode)
-    t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
-    t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
+    #t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
+    #t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
 
     net_g = select_generator(upSampMode, t_image, is_train=True, reuse=False)
 
@@ -190,6 +192,9 @@ def train(outputDirectory, upSampMode):
             step_time = time.time()
             b_imgs_384 = tl.prepro.threading_data(train_hr_imgs[idx:idx + batch_size], fn=crop_sub_imgs_fn, is_random=True)
             b_imgs_96 = tl.prepro.threading_data(b_imgs_384, fn=downsample_fn)
+            if upSampMode == "upBicubic":
+                b_imgs_96 = tl.prepro.threading_data(b_imgs_96, fn=upsample_fn)
+
             ## update G
             errM, _ = sess.run([mse_loss, g_optim_init], {t_image: b_imgs_96, t_target_image: b_imgs_384})
             print("Epoch [%2d/%2d] %4d time: %4.4fs, mse: %.8f " % (epoch, n_epoch_init, n_iter, time.time() - step_time, errM))
@@ -199,14 +204,14 @@ def train(outputDirectory, upSampMode):
         print(log)
 
         ## quick evaluation on train set
-        if (epoch != 0) and (epoch % 10 == 0):
+        if (epoch != 0) and (epoch % 5 == 0):
             out = sess.run(net_g_test.outputs, {t_image: sample_imgs_96})  #; print('gen sub-image:', out.shape, out.min(), out.max())
             print("[*] save images")
             tl.vis.save_images(out, [ni, ni], save_dir_ginit + '/train_%d.png' % epoch)
 
         ## save model
-        if (epoch != 0) and (epoch % 10 == 0):
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}_init.npz'.format(tl.global_flag['mode']), sess=sess)
+        if (epoch != 0) and (epoch % 5 == 0):
+            tl.files.save_npz(net_g.all_params, name="{}/g_{}init.ckpt".format(checkpoint_dir, tl.global_flag['mode']), sess=sess)
 
     ###========================= train GAN (SRGAN) =========================###
     for epoch in range(0, n_epoch + 1):
@@ -240,6 +245,8 @@ def train(outputDirectory, upSampMode):
             step_time = time.time()
             b_imgs_384 = tl.prepro.threading_data(train_hr_imgs[idx:idx + batch_size], fn=crop_sub_imgs_fn, is_random=True)
             b_imgs_96 = tl.prepro.threading_data(b_imgs_384, fn=downsample_fn)
+            if upSampMode == "upBicubic":
+                b_imgs_96 = tl.prepro.threading_data(b_imgs_96, fn=upsample_fn)
             ## update D
             errD, _ = sess.run([d_loss, d_optim], {t_image: b_imgs_96, t_target_image: b_imgs_384})
             ## update G
@@ -250,23 +257,24 @@ def train(outputDirectory, upSampMode):
             total_g_loss += errG
             n_iter += 1
 
+        gen_loss_file.write("{}, {}, {}\n".format(time.time(), epoch, total_g_loss))
+        dis_loss_file.write("{}, {}, {}\n".format(time.time(), epoch, total_d_loss))
         log = "[*] Epoch: [%2d/%2d] time: %4.4fs, d_loss: %.8f g_loss: %.8f" % (epoch, n_epoch, time.time() - epoch_time, total_d_loss / n_iter,
                                                                                 total_g_loss / n_iter)
         print(log)
 
         ## quick evaluation on train set
-        if (epoch != 0) and (epoch % 10 == 0):
+        if (epoch != 0) and (epoch % 5 == 0):
             out = sess.run(net_g_test.outputs, {t_image: sample_imgs_96})  #; print('gen sub-image:', out.shape, out.min(), out.max())
             print("[*] save images")
             tl.vis.save_images(out, [ni, ni], save_dir_gan + '/train_%d.png' % epoch)
 
         ## save model
-        #if (epoch != 0) and (epoch % 10 == 0):
-        if (epoch == 0) and (epoch % 10 == 0):
-            print("STORE IT!!")
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
-            tl.files.save_npz(net_d.all_params, name=checkpoint_dir + '/d_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
-
+        if (epoch != 0) and (epoch % 5 == 0):
+            tl.files.save_npz(net_g.all_params, name="{}/g_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
+            tl.files.save_npz(net_d.all_params, name="{}/d_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
+    gen_loss_file.close()
+    dis_loss_file.close()
 
 def evaluate():
     ## create folders to save result images
@@ -337,7 +345,11 @@ if __name__ == '__main__':
     parser.add_argument('--upsampling', type=str, help='Choose when to upsample, options: upBegin, upEnd, upBicubic')
 
 
+
     args = parser.parse_args()
+    if not len(sys.argv) > 1:
+        print("please give the upsampling flag, upsample, options: upBegin, upEnd, upBicubic")
+        exit()
     upSampMode = args.upsampling
     outputDirectory = "output/{}:{}".format(upSampMode, time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()))
     print("Storing results in: {}".format(outputDirectory))
