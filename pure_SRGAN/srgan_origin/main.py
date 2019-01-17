@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import os, time, pickle, random, time
+import sys
 from datetime import datetime
 import numpy as np
 from time import localtime, strftime
@@ -12,7 +13,6 @@ import tensorlayer as tl
 from model import SRGAN_g, SRGAN_d, Vgg19_simple_api
 from utils import *
 from config import config, log_config
-
 ###====================== HYPER-PARAMETERS ===========================###
 ## Adam
 batch_size = config.TRAIN.batch_size
@@ -25,16 +25,17 @@ n_epoch = config.TRAIN.n_epoch
 lr_decay = config.TRAIN.lr_decay
 decay_every = config.TRAIN.decay_every
 
-ni = int(np.sqrt(batch_size))
+ni = 1#int(np.sqrt(batch_size))
 
 
-def train():
+def train(outputDirectory, upSampMode):
     ## create folders to save result images and trained model
-    save_dir_ginit = "samples/{}_ginit".format(tl.global_flag['mode'])
-    save_dir_gan = "samples/{}_gan".format(tl.global_flag['mode'])
+    tl.files.exists_or_mkdir("{}/samples".format(outputDirectory))
+    save_dir_ginit = "{}/samples/{}_ginit".format(outputDirectory, tl.global_flag['mode'])
+    save_dir_gan = "{}/samples/{}_gan".format(outputDirectory, tl.global_flag['mode'])
     tl.files.exists_or_mkdir(save_dir_ginit)
     tl.files.exists_or_mkdir(save_dir_gan)
-    checkpoint_dir = "checkpoint"  # checkpoint_resize_conv
+    checkpoint_dir = "{}/checkpoint".format(outputDirectory)  # checkpoint_resize_conv
     tl.files.exists_or_mkdir(checkpoint_dir)
 
     ###====================== PRE-LOAD DATA ===========================###
@@ -234,8 +235,8 @@ def train():
 
         ## save model
         if (epoch != 0) and (epoch % 10 == 0):
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}.npz'.format(tl.global_flag['mode']), sess=sess)
-            tl.files.save_npz(net_d.all_params, name=checkpoint_dir + '/d_{}.npz'.format(tl.global_flag['mode']), sess=sess)
+            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
+            tl.files.save_npz(net_d.all_params, name=checkpoint_dir + '/d_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
 
 
 def evaluate():
@@ -297,17 +298,27 @@ def evaluate():
 
 
 if __name__ == '__main__':
+    #Possible commands: upBegin upEnd upBicubic
     import argparse
+
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--mode', type=str, default='srgan', help='srgan, evaluate')
+    parser.add_argument('--upsampling', type=str, help='Choose when to upsample, options: upBegin, upEnd, upBicubic')
+
 
     args = parser.parse_args()
+    upSampMode = args.upsampling
+    outputDirectory = "output/{}:{}".format(upSampMode, time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()))
+    print("Storing results in: {}".format(outputDirectory))
+    if not os.path.exists(outputDirectory):
+        os.makedirs(outputDirectory)
 
     tl.global_flag['mode'] = args.mode
 
     if tl.global_flag['mode'] == 'srgan':
-        train()
+        train(outputDirectory, upSampMode)
     elif tl.global_flag['mode'] == 'evaluate':
         evaluate()
     else:
