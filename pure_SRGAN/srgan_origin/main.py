@@ -25,7 +25,7 @@ n_epoch = config.TRAIN.n_epoch
 lr_decay = config.TRAIN.lr_decay
 decay_every = config.TRAIN.decay_every
 
-ni = 1#int(np.sqrt(batch_size))
+ni = int(np.sqrt(batch_size))
 
 def select_target_image(upSampMode):
     if upSampMode == "upBicubic":
@@ -55,6 +55,10 @@ def train(outputDirectory, upSampMode):
     tl.files.exists_or_mkdir(save_dir_gan)
     checkpoint_dir = "{}/checkpoint".format(outputDirectory)  # checkpoint_resize_conv
     tl.files.exists_or_mkdir(checkpoint_dir)
+
+    gen_loss_file = open("{}/genLoss.csv".format(outputDirectory), "w")
+    dis_loss_file = open("{}/disLoss.csv".format(outputDirectory), "w")
+    #saver = tf.train.Saver()
 
     ###====================== PRE-LOAD DATA ===========================###
     train_hr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.hr_img_path, regx='.*.png', printable=False))
@@ -200,14 +204,14 @@ def train(outputDirectory, upSampMode):
         print(log)
 
         ## quick evaluation on train set
-        if (epoch != 0) and (epoch % 10 == 0):
+        if (epoch != 0) and (epoch % 5 == 0):
             out = sess.run(net_g_test.outputs, {t_image: sample_imgs_96})  #; print('gen sub-image:', out.shape, out.min(), out.max())
             print("[*] save images")
             tl.vis.save_images(out, [ni, ni], save_dir_ginit + '/train_%d.png' % epoch)
 
         ## save model
-        if (epoch != 0) and (epoch % 10 == 0):
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}_init.npz'.format(tl.global_flag['mode']), sess=sess)
+        if (epoch != 0) and (epoch % 5 == 0):
+            tl.files.save_npz(net_g.all_params, name="{}/g_{}init.ckpt".format(checkpoint_dir, tl.global_flag['mode']), sess=sess)
 
     ###========================= train GAN (SRGAN) =========================###
     for epoch in range(0, n_epoch + 1):
@@ -253,23 +257,24 @@ def train(outputDirectory, upSampMode):
             total_g_loss += errG
             n_iter += 1
 
+        gen_loss_file.write("{}, {}, {}\n".format(time.time(), epoch, total_g_loss))
+        dis_loss_file.write("{}, {}, {}\n".format(time.time(), epoch, total_d_loss))
         log = "[*] Epoch: [%2d/%2d] time: %4.4fs, d_loss: %.8f g_loss: %.8f" % (epoch, n_epoch, time.time() - epoch_time, total_d_loss / n_iter,
                                                                                 total_g_loss / n_iter)
         print(log)
 
         ## quick evaluation on train set
-        if (epoch != 0) and (epoch % 10 == 0):
+        if (epoch != 0) and (epoch % 5 == 0):
             out = sess.run(net_g_test.outputs, {t_image: sample_imgs_96})  #; print('gen sub-image:', out.shape, out.min(), out.max())
             print("[*] save images")
             tl.vis.save_images(out, [ni, ni], save_dir_gan + '/train_%d.png' % epoch)
 
         ## save model
-        #if (epoch != 0) and (epoch % 10 == 0):
-        if (epoch == 0) and (epoch % 10 == 0):
-            print("STORE IT!!")
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
-            tl.files.save_npz(net_d.all_params, name=checkpoint_dir + '/d_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
-
+        if (epoch != 0) and (epoch % 5 == 0):
+            tl.files.save_npz(net_g.all_params, name="{}/g_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
+            tl.files.save_npz(net_d.all_params, name="{}/d_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
+    gen_loss_file.close()
+    dis_loss_file.close()
 
 def evaluate():
     ## create folders to save result images
