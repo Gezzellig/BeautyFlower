@@ -30,7 +30,7 @@ ntasks = input("Amount of ntasks per experiment: ")
 job_name = input("Name of the jobs: ")
 
 template = """#!/bin/bash
-#SBATCH --time_job={time_job}
+#SBATCH --time={time_job}
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
 #SBATCH --mem={mem}
