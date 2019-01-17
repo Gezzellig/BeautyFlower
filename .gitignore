@@ -87,4 +87,5 @@ venv/*
 
 slurm*
 
+data2017/*
 trained_networks/*
