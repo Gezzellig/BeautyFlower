@@ -62,6 +62,12 @@ def train(outputDirectory, upSampMode):
     valid_hr_img_list = sorted(tl.files.load_file_list(path=config.VALID.hr_img_path, regx='.*.png', printable=False))
     valid_lr_img_list = sorted(tl.files.load_file_list(path=config.VALID.lr_img_path, regx='.*.png', printable=False))
 
+    if upSampMode == "upBicubic":
+        train_bc_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.bc_img_path, regx='.*.png', printable=False))
+        valid_bc_img_list = sorted(tl.files.load_file_list(path=config.VALID.bc_img_path, regx='.*.png', printable=False))
+    else:
+
+
     ## If your machine have enough memory, please pre-load the whole train set.
     train_hr_imgs = tl.vis.read_images(train_hr_img_list, path=config.TRAIN.hr_img_path, n_threads=32)
     # for im in train_hr_imgs:
