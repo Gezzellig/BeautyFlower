@@ -16,6 +16,10 @@ path = DATA_FOLDER + "/" + image_folders[int(selected_folder)] + "/X4"
 
 print ("Using: " +  path)
 
+# Create the directories if they don't exist
+if not os.path.exists(path.replace("bicubic", "resized")):
+    os.makedirs(path.replace("bicubic", "resized"))
+
 for image_name in os.listdir(path):
 	image_path = path + "/" + image_name
 	
