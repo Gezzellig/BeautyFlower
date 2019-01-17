@@ -10,7 +10,7 @@ import logging, scipy
 
 import tensorflow as tf
 import tensorlayer as tl
-from model import SRGAN_g, SRGAN_d, Vgg19_simple_api
+from model import SRGAN_g_upEnd, SRGAN_g_upBegin, SRGAN_g_upBicubic, SRGAN_d, Vgg19_simple_api
 from utils import *
 from config import config, log_config
 ###====================== HYPER-PARAMETERS ===========================###
@@ -27,6 +27,24 @@ decay_every = config.TRAIN.decay_every
 
 ni = 1#int(np.sqrt(batch_size))
 
+def select_target_image(upSampMode):
+    if upSampMode == "upBicubic":
+        t_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_image_input_to_SRGAN_generator')
+    else:
+        t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
+    t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
+    return t_image, t_target_image
+
+def select_generator(upSampMode, t_image, is_train, reuse):
+    if upSampMode == "upBegin":
+        return SRGAN_g_upBegin(t_image, is_train, reuse)
+    elif upSampMode == "upEnd":
+        return SRGAN_g_upEnd(t_image, is_train, reuse)
+    elif upSampMode == "upBicubic":
+        return SRGAN_g_upBicubic(t_image, is_train, reuse)
+    else:
+        print("Mode doesn't exist!!")
+        exit()
 
 def train(outputDirectory, upSampMode):
     ## create folders to save result images and trained model
@@ -58,10 +76,12 @@ def train(outputDirectory, upSampMode):
 
     ###========================== DEFINE MODEL ============================###
     ## train inference
+    t_image, t_target_image = select_target_image(upSampMode)
     t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
     t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
 
-    net_g = SRGAN_g(t_image, is_train=True, reuse=False)
+    net_g = select_generator(upSampMode, t_image, is_train=True, reuse=False)
+
     net_d, logits_real = SRGAN_d(t_target_image, is_train=True, reuse=False)
     _, logits_fake = SRGAN_d(net_g.outputs, is_train=True, reuse=True)
 
@@ -80,7 +100,7 @@ def train(outputDirectory, upSampMode):
     _, vgg_predict_emb = Vgg19_simple_api((t_predict_image_224 + 1) / 2, reuse=True)
 
     ## test inference
-    net_g_test = SRGAN_g(t_image, is_train=False, reuse=True)
+    net_g_test = select_generator(upSampMode, t_image, is_train=False, reuse=True)
 
     # ###========================== DEFINE TRAIN OPS ==========================###
     d_loss1 = tl.cost.sigmoid_cross_entropy(logits_real, tf.ones_like(logits_real), name='d1')
@@ -184,6 +204,7 @@ def train(outputDirectory, upSampMode):
 
     ###========================= train GAN (SRGAN) =========================###
     for epoch in range(0, n_epoch + 1):
+        print(checkpoint_dir + '/g_{}{}.npz'.format(tl.global_flag['mode'], epoch))
         ## update learning rate
         if epoch != 0 and (epoch % decay_every == 0):
             new_lr_decay = lr_decay**(epoch // decay_every)
@@ -234,7 +255,9 @@ def train(outputDirectory, upSampMode):
             tl.vis.save_images(out, [ni, ni], save_dir_gan + '/train_%d.png' % epoch)
 
         ## save model
-        if (epoch != 0) and (epoch % 10 == 0):
+        #if (epoch != 0) and (epoch % 10 == 0):
+        if (epoch == 0) and (epoch % 10 == 0):
+            print("STORE IT!!")
             tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
             tl.files.save_npz(net_d.all_params, name=checkpoint_dir + '/d_{}{}.npz'.format(tl.global_flag['mode'], epoch), sess=sess)
 
