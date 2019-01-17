@@ -58,15 +58,13 @@ def train(outputDirectory, upSampMode):
 
     ###====================== PRE-LOAD DATA ===========================###
     train_hr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.hr_img_path, regx='.*.png', printable=False))
-    train_lr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.lr_img_path, regx='.*.png', printable=False))
-    valid_hr_img_list = sorted(tl.files.load_file_list(path=config.VALID.hr_img_path, regx='.*.png', printable=False))
-    valid_lr_img_list = sorted(tl.files.load_file_list(path=config.VALID.lr_img_path, regx='.*.png', printable=False))
+    #train_lr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.lr_img_path, regx='.*.png', printable=False))
+    #valid_hr_img_list = sorted(tl.files.load_file_list(path=config.VALID.hr_img_path, regx='.*.png', printable=False))
+    #valid_lr_img_list = sorted(tl.files.load_file_list(path=config.VALID.lr_img_path, regx='.*.png', printable=False))
 
-    if upSampMode == "upBicubic":
-        train_bc_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.bc_img_path, regx='.*.png', printable=False))
-        valid_bc_img_list = sorted(tl.files.load_file_list(path=config.VALID.bc_img_path, regx='.*.png', printable=False))
-    else:
-
+    #if upSampMode == "upBicubic":
+        #train_bc_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.bc_img_path, regx='.*.png', printable=False))
+        #valid_bc_img_list = sorted(tl.files.load_file_list(path=config.VALID.bc_img_path, regx='.*.png', printable=False))
 
     ## If your machine have enough memory, please pre-load the whole train set.
     train_hr_imgs = tl.vis.read_images(train_hr_img_list, path=config.TRAIN.hr_img_path, n_threads=32)
@@ -83,8 +81,8 @@ def train(outputDirectory, upSampMode):
     ###========================== DEFINE MODEL ============================###
     ## train inference
     t_image, t_target_image = select_target_image(upSampMode)
-    t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
-    t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
+    #t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
+    #t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
 
     net_g = select_generator(upSampMode, t_image, is_train=True, reuse=False)
 
@@ -190,6 +188,9 @@ def train(outputDirectory, upSampMode):
             step_time = time.time()
             b_imgs_384 = tl.prepro.threading_data(train_hr_imgs[idx:idx + batch_size], fn=crop_sub_imgs_fn, is_random=True)
             b_imgs_96 = tl.prepro.threading_data(b_imgs_384, fn=downsample_fn)
+            if upSampMode == "upBicubic":
+                b_imgs_96 = tl.prepro.threading_data(b_imgs_96, fn=upsample_fn)
+
             ## update G
             errM, _ = sess.run([mse_loss, g_optim_init], {t_image: b_imgs_96, t_target_image: b_imgs_384})
             print("Epoch [%2d/%2d] %4d time: %4.4fs, mse: %.8f " % (epoch, n_epoch_init, n_iter, time.time() - step_time, errM))
@@ -240,6 +241,8 @@ def train(outputDirectory, upSampMode):
             step_time = time.time()
             b_imgs_384 = tl.prepro.threading_data(train_hr_imgs[idx:idx + batch_size], fn=crop_sub_imgs_fn, is_random=True)
             b_imgs_96 = tl.prepro.threading_data(b_imgs_384, fn=downsample_fn)
+            if upSampMode == "upBicubic":
+                b_imgs_96 = tl.prepro.threading_data(b_imgs_96, fn=upsample_fn)
             ## update D
             errD, _ = sess.run([d_loss, d_optim], {t_image: b_imgs_96, t_target_image: b_imgs_384})
             ## update G
@@ -337,7 +340,11 @@ if __name__ == '__main__':
     parser.add_argument('--upsampling', type=str, help='Choose when to upsample, options: upBegin, upEnd, upBicubic')
 
 
+
     args = parser.parse_args()
+    if not len(sys.argv) > 1:
+        print("please give the upsampling flag, upsample, options: upBegin, upEnd, upBicubic")
+        exit()
     upSampMode = args.upsampling
     outputDirectory = "output/{}:{}".format(upSampMode, time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()))
     print("Storing results in: {}".format(outputDirectory))
