@@ -7,4 +7,3 @@ samples/
 checkpoint/
 __pycache__/
 data/
-vgg19.npy
