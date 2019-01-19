@@ -35,18 +35,18 @@ def select_target_image(upSampMode):
     t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
     return t_image, t_target_image
 
-def select_generator(upSampMode, t_image, is_train, reuse):
+def select_generator(upSampMode, t_image, numResBlocks, is_train, reuse):
     if upSampMode == "upBegin":
-        return SRGAN_g_upBegin(t_image, is_train, reuse)
+        return SRGAN_g_upBegin(t_image, numResBlocks, is_train, reuse)
     elif upSampMode == "upEnd":
-        return SRGAN_g_upEnd(t_image, is_train, reuse)
+        return SRGAN_g_upEnd(t_image, numResBlocks, is_train, reuse)
     elif upSampMode == "upBicubic":
-        return SRGAN_g_upBicubic(t_image, is_train, reuse)
+        return SRGAN_g_upBicubic(t_image, numResBlocks, is_train, reuse)
     else:
         print("Mode doesn't exist!!")
         exit()
 
-def train(outputDirectory, upSampMode):
+def train(outputDirectory, upSampMode, numResBlocks):
     ## create folders to save result images and trained model
     tl.files.exists_or_mkdir("{}/samples".format(outputDirectory))
     save_dir_ginit = "{}/samples/{}_ginit".format(outputDirectory, tl.global_flag['mode'])
@@ -88,7 +88,7 @@ def train(outputDirectory, upSampMode):
     #t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
     #t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
 
-    net_g = select_generator(upSampMode, t_image, is_train=True, reuse=False)
+    net_g = select_generator(upSampMode, t_image, numResBlocks, is_train=True, reuse=False)
 
     net_d, logits_real = SRGAN_d(t_target_image, is_train=True, reuse=False)
     _, logits_fake = SRGAN_d(net_g.outputs, is_train=True, reuse=True)
@@ -108,7 +108,7 @@ def train(outputDirectory, upSampMode):
     _, vgg_predict_emb = Vgg19_simple_api((t_predict_image_224 + 1) / 2, reuse=True)
 
     ## test inference
-    net_g_test = select_generator(upSampMode, t_image, is_train=False, reuse=True)
+    net_g_test = select_generator(upSampMode, t_image, numResBlocks, is_train=False, reuse=True)
 
     # ###========================== DEFINE TRAIN OPS ==========================###
     d_loss1 = tl.cost.sigmoid_cross_entropy(logits_real, tf.ones_like(logits_real), name='d1')
@@ -343,6 +343,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--mode', type=str, default='srgan', help='srgan, evaluate')
     parser.add_argument('--upsampling', type=str, help='Choose when to upsample, options: upBegin, upEnd, upBicubic')
+    parser.add_argument('--numResidualBlocks', type=int, help='Choose the amount of residual blocks you want to run')
 
 
 
@@ -351,7 +352,8 @@ if __name__ == '__main__':
         print("please give the upsampling flag, upsample, options: upBegin, upEnd, upBicubic")
         exit()
     upSampMode = args.upsampling
-    outputDirectory = "output/{}:{}".format(upSampMode, time.strftime("%d_%b_%Y_%H:%M:%S", time.gmtime()))
+    numResBlocks = args.numResidualBlocks
+    outputDirectory = "output/{}_{}-{}".format(upSampMode, numResBlocks, time.strftime("%d_%b_%Y_%H-%M-%S", time.gmtime()))
     print("Storing results in: {}".format(outputDirectory))
     if not os.path.exists(outputDirectory):
         os.makedirs(outputDirectory)
@@ -359,7 +361,7 @@ if __name__ == '__main__':
     tl.global_flag['mode'] = args.mode
 
     if tl.global_flag['mode'] == 'srgan':
-        train(outputDirectory, upSampMode)
+        train(outputDirectory, upSampMode, numResBlocks)
     elif tl.global_flag['mode'] == 'evaluate':
         evaluate()
     else:
