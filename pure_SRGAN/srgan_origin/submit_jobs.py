@@ -7,18 +7,18 @@ def run_jobs(amt_jobs):
 		for _ in range(int(amt_jobs)):
 			for resBlock in residualBlockList:
 				filename = "batch_gpu.txt"
-				#script 	 = open(filename, "w+")
+				script 	 = open(filename, "w+")
 				jobstring = template.format(time_job=time_job, mem=mem, nodes=nodes, ntasks=ntasks, job_name=job_name, upsampling=s, resBlock=resBlock)
-				#script.write(jobstring)
-				#script.close()
+				script.write(jobstring)
+				script.close()
 				try:
-					#subprocess.call(["sbatch", filename])
+					subprocess.call(["sbatch", filename])
 					pass
 				except OSError:
 					script.close()
 					print("sbatch not found or filename wrong")
 					
-				#os.remove(filename)
+				os.remove(filename)
 				print ("Submitted job: ", filename)
 				print (jobstring)
 				time.sleep(1)
