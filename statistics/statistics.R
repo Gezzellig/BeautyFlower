@@ -1,5 +1,7 @@
 library(ggplot2)
 
+setwd("/home/u/Documents/university/machine_learning/BeautyFlower/statistics")
+
 ## DISCRIMINATORS ##
 # Load the models
 dis_loss2 = read.csv("model2/disLoss.csv", header = FALSE)
