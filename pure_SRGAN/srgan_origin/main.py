@@ -2,6 +2,7 @@
 # -*- coding: utf8 -*-
 
 import os, time, pickle, random, time
+import sys
 from datetime import datetime
 import numpy as np
 from time import localtime, strftime
@@ -28,14 +29,18 @@ decay_every = config.TRAIN.decay_every
 ni = int(np.sqrt(batch_size))
 
 
-def train():
+def train(outputDirectory, num_res_block):
     ## create folders to save result images and trained model
-    save_dir_ginit = "samples/{}_ginit".format(tl.global_flag['mode'])
-    save_dir_gan = "samples/{}_gan".format(tl.global_flag['mode'])
+    tl.files.exists_or_mkdir("{}/samples".format(outputDirectory))
+    save_dir_ginit = "{}/samples/{}_ginit".format(outputDirectory, tl.global_flag['mode'])
+    save_dir_gan = "{}/samples/{}_gan".format(outputDirectory, tl.global_flag['mode'])
     tl.files.exists_or_mkdir(save_dir_ginit)
     tl.files.exists_or_mkdir(save_dir_gan)
-    checkpoint_dir = "checkpoint"  # checkpoint_resize_conv
+    checkpoint_dir = "{}/checkpoint".format(outputDirectory)  # checkpoint_resize_conv
     tl.files.exists_or_mkdir(checkpoint_dir)
+
+    gen_loss_file = open("{}/genLoss.csv".format(outputDirectory), "w")
+    dis_loss_file = open("{}/disLoss.csv".format(outputDirectory), "w")
 
     ###====================== PRE-LOAD DATA ===========================###
     train_hr_img_list = sorted(tl.files.load_file_list(path=config.TRAIN.hr_img_path, regx='.*.png', printable=False))
@@ -79,7 +84,7 @@ def train():
     _, vgg_predict_emb = Vgg19_simple_api((t_predict_image_224 + 1) / 2, reuse=True)
 
     ## test inference
-    net_g_test = SRGAN_g(t_image, is_train=False, reuse=True)
+    net_g_test = SRGAN_g(t_image, num_res_block, is_train=False, reuse=True)
 
     # ###========================== DEFINE TRAIN OPS ==========================###
     d_loss1 = tl.cost.sigmoid_cross_entropy(logits_real, tf.ones_like(logits_real), name='d1')
@@ -179,8 +184,7 @@ def train():
 
         ## save model
         if (epoch != 0) and (epoch % 10 == 0):
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}_init.npz'.format(tl.global_flag['mode']), sess=sess)
-
+            tl.files.save_npz(net_g.all_params, name="{}/g_{}init.npz".format(checkpoint_dir, tl.global_flag['mode']), sess=sess)
     ###========================= train GAN (SRGAN) =========================###
     for epoch in range(0, n_epoch + 1):
         ## update learning rate
@@ -234,8 +238,11 @@ def train():
 
         ## save model
         if (epoch != 0) and (epoch % 10 == 0):
-            tl.files.save_npz(net_g.all_params, name=checkpoint_dir + '/g_{}.npz'.format(tl.global_flag['mode']), sess=sess)
-            tl.files.save_npz(net_d.all_params, name=checkpoint_dir + '/d_{}.npz'.format(tl.global_flag['mode']), sess=sess)
+            tl.files.save_npz(net_g.all_params, name="{}/g_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
+            if (epoch == 100):
+                tl.files.save_npz(net_d.all_params, name="{}/d_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
+        gen_loss_file.close()
+        dis_loss_file.close()
 
 
 def evaluate():
@@ -303,16 +310,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--mode', type=str, default='srgan', help='srgan, evaluate')
-    parser.add_argument('--upsampling', type=str, help='Choose when to upsample, options: upBegin, upEnd, upBicubic')
     parser.add_argument('--numResidualBlocks', type=int, help='Choose the amount of residual blocks you want to run')
 
     args = parser.parse_args()
     if not len(sys.argv) > 1:
         print("please give the upsampling flag, upsample, options: upBegin, upEnd, upBicubic")
         exit()
-    upSampMode = args.upsampling
-    numResBlocks = args.numResidualBlocks
-    outputDirectory = "output/{}_{}-{}".format(upSampMode, numResBlocks, time.strftime("%d_%b_%Y_%H-%M-%S", time.gmtime()))
+
+    num_res_block = args.numResidualBlocks
+    outputDirectory = "output/r{}-{}".format(num_res_block, time.strftime("%d_%b_%Y_%H-%M-%S", time.gmtime()))
     print("Storing results in: {}".format(outputDirectory))
     if not os.path.exists(outputDirectory):
         os.makedirs(outputDirectory)
@@ -320,7 +326,7 @@ if __name__ == '__main__':
     tl.global_flag['mode'] = args.mode
 
     if tl.global_flag['mode'] == 'srgan':
-        train(outputDirectory, upSampMode, numResBlocks)
+        train(outputDirectory, num_res_block)
     elif tl.global_flag['mode'] == 'evaluate':
         evaluate()
     else:
