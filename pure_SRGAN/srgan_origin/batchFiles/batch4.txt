@@ -1,0 +1,10 @@
+#!/bin/bash
+#SBATCH --time=8:00:00
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --mem=24000
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --job-name=residual4
+
+python3 ./main.py --upsampling upEnd --numResidualBlocks 4
