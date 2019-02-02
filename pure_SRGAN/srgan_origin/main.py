@@ -65,7 +65,7 @@ def train(outputDirectory, num_res_block):
     t_image = tf.placeholder('float32', [batch_size, 96, 96, 3], name='t_image_input_to_SRGAN_generator')
     t_target_image = tf.placeholder('float32', [batch_size, 384, 384, 3], name='t_target_image')
 
-    net_g = SRGAN_g(t_image, is_train=True, reuse=False)
+    net_g = SRGAN_g(t_image, num_res_block, is_train=True, reuse=False)
     net_d, logits_real = SRGAN_d(t_target_image, is_train=True, reuse=False)
     _, logits_fake = SRGAN_d(net_g.outputs, is_train=True, reuse=True)
 
@@ -314,7 +314,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if not len(sys.argv) > 1:
-        print("please give the upsampling flag, upsample, options: upBegin, upEnd, upBicubic")
+        print("Specify --numResidualBlocks <number>")
         exit()
 
     num_res_block = args.numResidualBlocks
