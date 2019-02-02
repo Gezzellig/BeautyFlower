@@ -239,7 +239,7 @@ def train(outputDirectory, num_res_block):
         ## save model
         if (epoch != 0) and (epoch % 10 == 0):
             tl.files.save_npz(net_g.all_params, name="{}/g_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
-            if (epoch == 100):
+            if (epoch != 0) and (epoch % 100 == 0):
                 tl.files.save_npz(net_d.all_params, name="{}/d_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
         gen_loss_file.close()
         dis_loss_file.close()
