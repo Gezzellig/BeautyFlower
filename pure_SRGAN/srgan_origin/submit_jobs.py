@@ -14,7 +14,6 @@ def run_jobs(amt_jobs):
 			except OSError:
 				script.close()
 				print("sbatch not found or filename wrong")
-				
 			os.remove(filename)
 			print ("Submitted job: ", filename)
 			print (jobstring)

@@ -7,7 +7,7 @@ import tensorlayer as tl
 from tensorlayer.layers import *
 
 
-def SRGAN_g(t_image, num_res_block=16, is_train=False, reuse=False):
+def SRGAN_g(t_image, num_res_block, is_train=False, reuse=False):
     """ Generator in Photo-Realistic Single Image Super-Resolution Using a Generative Adversarial Network
     feature maps (n) and stride (s) feature maps (n) and stride (s)
     """
