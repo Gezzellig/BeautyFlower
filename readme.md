@@ -10,3 +10,5 @@
 
 ### Run
 1. python3 main.py
+
+This code is extracted from https://github.com/tensorlayer/srgan and modified to answer our research question: What is the effect of using less residual blocks.
