@@ -176,6 +176,7 @@ def train(outputDirectory, num_res_block):
         log = "[*] Epoch: [%2d/%2d] time: %4.4fs, mse: %.8f" % (epoch, n_epoch_init, time.time() - epoch_time, total_mse_loss / n_iter)
         print(log)
 
+
         ## quick evaluation on train set
         if (epoch != 0) and (epoch % 10 == 0):
             out = sess.run(net_g_test.outputs, {t_image: sample_imgs_96})  #; print('gen sub-image:', out.shape, out.min(), out.max())
@@ -226,9 +227,15 @@ def train(outputDirectory, num_res_block):
             total_g_loss += errG
             n_iter += 1
 
+        gen_loss_file.write("{}, {}, {}\n".format(time.time(), epoch, total_g_loss))
+        dis_loss_file.write("{}, {}, {}\n".format(time.time(), epoch, total_d_loss))
+        gen_loss_file.flush()
+        dis_loss_file.flush()
         log = "[*] Epoch: [%2d/%2d] time: %4.4fs, d_loss: %.8f g_loss: %.8f" % (epoch, n_epoch, time.time() - epoch_time, total_d_loss / n_iter,
                                                                                 total_g_loss / n_iter)
+        
         print(log)
+        sys.stdout.flush()
 
         ## quick evaluation on train set
         if (epoch != 0) and (epoch % 10 == 0):
@@ -241,8 +248,9 @@ def train(outputDirectory, num_res_block):
             tl.files.save_npz(net_g.all_params, name="{}/g_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
             if (epoch != 0) and (epoch % 100 == 0):
                 tl.files.save_npz(net_d.all_params, name="{}/d_{}{}".format(checkpoint_dir, tl.global_flag['mode'], epoch), sess=sess)
-        gen_loss_file.close()
-        dis_loss_file.close()
+
+    gen_loss_file.close()
+    dis_loss_file.close()
 
 
 def evaluate():
