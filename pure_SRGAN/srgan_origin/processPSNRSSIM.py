@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 
-from main import select_generator
+from model import SRGAN_g
 
 validate_image_path_hr = "validateImages/hr"
 validate_image_path_lr = "validateImages/lr"
@@ -38,17 +38,21 @@ def eval_one_residual_number(num_units, super_model_path, images_hr, images_lr):
     model_paths = sorted(os.listdir(checkpoint_path))
 
     t_image = tf.placeholder('float32', [1, None, None, 3], name='input_image')
-    net_g = select_generator("upEnd", t_image, num_units, is_train=False, reuse=False)
+    net_g = SRGAN_g(t_image, num_units, is_train=False, reuse=False)
     sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True, log_device_placement=False))
     tl.layers.initialize_global_variables(sess)
 
     model_results = []
     for model_path in model_paths:
+
+        #Skip discriminator files
+        if model_path.split("_")[0] == "d":
+            continue
         epoch = model_path.split("n")[1].split(".")[0]
         if epoch == "i":
             continue
         epoch = int(epoch)
-        if epoch == 100:
+        if epoch > 400:
             continue
         print(epoch)
         model_results.append((epoch, eval_one_model("{}/{}".format(checkpoint_path, model_path), sess, net_g, t_image, images_hr, images_lr)))
@@ -60,9 +64,7 @@ def eval_one_residual_number(num_units, super_model_path, images_hr, images_lr):
 def eval_everything(super_path, images_hr, images_lr):
     model_paths = sorted(os.listdir(super_path))
     for model_path in model_paths:
-        num_units = int(model_path.split("_")[1].split("-")[0])
-        if num_units == 1:
-            continue
+        num_units = int(model_path.split("r")[1].split("-")[0])
         results = eval_one_residual_number(num_units, "{}/{}".format(super_path, model_path), images_hr, images_lr)
         results = sorted(results)
         psnr_file = open("outProcess/psnr{}.csv".format(num_units), "w")
