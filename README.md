@@ -8,10 +8,10 @@
 ### Prepare dataset
 1. Go to: https://data.vision.ee.ethz.ch/cvl/DIV2K/
 2. Download here the following:
-  a. Train Data Track 1 bicubic downscaling x4 (LR images)
-  b. Validation Data Track 1 bicubic downscaling x4 (LR images)
-  c. Train Data (HR images)
-  d. Validation Data (HR images)
+  * Train Data Track 1 bicubic downscaling x4 (LR images)
+  * Validation Data Track 1 bicubic downscaling x4 (LR images)
+  * Train Data (HR images)
+  * Validation Data (HR images)
 3. Update the config.py to match the paths to the dataset folder.
 
 ### Hyperparameters
